@@ -1,0 +1,23 @@
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--vs-bg);
+  color: var(--vs-text);
+  font-family: 'Geist Variable', 'Segoe UI', system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

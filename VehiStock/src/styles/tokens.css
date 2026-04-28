@@ -1,0 +1,119 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #f8faf8;
+  --foreground: #111811;
+  --card: #ffffff;
+  --card-foreground: #111811;
+  --popover: #ffffff;
+  --popover-foreground: #111811;
+  --primary: #1e7a46;
+  --primary-foreground: #ffffff;
+  --secondary: #e8f5e9;
+  --secondary-foreground: #155c35;
+  --muted: #f0f4f0;
+  --muted-foreground: #6b7a6b;
+  --accent: #2ea05e;
+  --accent-foreground: #ffffff;
+  --destructive: #e24b4a;
+  --border: #e0e8e0;
+  --input: #c8ddc8;
+  --ring: #2ea05e;
+  --chart-1: #2ea05e;
+  --chart-2: #97c459;
+  --chart-3: #ef9f27;
+  --chart-4: #f09595;
+  --chart-5: #a8dfc0;
+  --radius: 0.625rem;
+  --sidebar: #1e7a46;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #1e7a46;
+  --sidebar-accent: rgba(255, 255, 255, 0.18);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: rgba(255, 255, 255, 0.35);
+  --vs-bg: #f8faf8;
+  --vs-panel: #ffffff;
+  --vs-green-900: #155c35;
+  --vs-green-800: #1e7a46;
+  --vs-green-600: #2ea05e;
+  --vs-green-100: #e8f5e9;
+  --vs-olive: #97c459;
+  --vs-gold: #ef9f27;
+  --vs-red: #e24b4a;
+  --vs-red-100: #ffebee;
+  --vs-blue-100: #e3f2fd;
+  --vs-blue-800: #0c447c;
+  --vs-text: #111811;
+  --vs-muted: #6b7a6b;
+  --vs-faint: #9dab9d;
+  --vs-border: #e0e8e0;
+  --vs-soft-border: #f0f4f0;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', 'Segoe UI', system-ui, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    box-sizing: border-box;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}
