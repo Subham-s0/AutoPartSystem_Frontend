@@ -1,31 +1,44 @@
-import { Package } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import * as React from 'react'
+import { LogOut, Package } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { ROUTE_PATHS } from '@/app/config/routes'
+import { useAuth } from '@/hooks/use-auth'
 import type { NavigationSection } from '@/types/common'
 
 interface AppSidebarProps {
   sections: NavigationSection[]
   brandTitle: string
   brandSubtitle: string
-  profileName: string
-  profileRole: string
-}
-
-function getInitials(fullName: string) {
-  return fullName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((segment) => segment[0]?.toUpperCase() ?? '')
-    .join('')
 }
 
 export function AppSidebar({
   sections,
   brandTitle,
   brandSubtitle,
-  profileName,
-  profileRole,
 }: AppSidebarProps) {
+  const navigate = useNavigate()
+  const { signOut } = useAuth()
+  const [isSigningOut, setIsSigningOut] = React.useState(false)
+
+  async function handleLogout() {
+    setIsSigningOut(true)
+
+    try {
+      await signOut()
+      navigate(ROUTE_PATHS.home, { replace: true })
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
+
+  function shouldUseExactMatch(path: string) {
+    return (
+      path === ROUTE_PATHS.admin.dashboard ||
+      path === ROUTE_PATHS.staff.dashboard ||
+      path === ROUTE_PATHS.customer.dashboard
+    )
+  }
+
   return (
     <aside className="sidebar">
       <div className="sb-logo">
@@ -46,6 +59,7 @@ export function AppSidebar({
               <li key={item.to}>
                 <NavLink
                   className={({ isActive }) => (isActive ? 'active' : undefined)}
+                  end={shouldUseExactMatch(item.to)}
                   to={item.to}
                 >
                   <item.icon />
@@ -57,14 +71,16 @@ export function AppSidebar({
         </div>
       ))}
 
-      <div className="sb-profile">
-        <div className="profile-row">
-          <div className="avatar">{getInitials(profileName)}</div>
-          <div>
-            <div className="profile-name">{profileName}</div>
-            <div className="profile-role">{profileRole}</div>
-          </div>
-        </div>
+      <div className="sb-footer">
+        <button
+          className="sb-logout"
+          disabled={isSigningOut}
+          onClick={() => void handleLogout()}
+          type="button"
+        >
+          <LogOut size={15} />
+          {isSigningOut ? 'Signing out...' : 'Logout'}
+        </button>
       </div>
     </aside>
   )

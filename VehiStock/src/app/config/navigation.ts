@@ -113,7 +113,7 @@ const customerNavigation: NavigationSection[] = [
         icon: CarFront,
       },
       {
-        label: 'Book Appointment',
+        label: 'Appointments',
         to: ROUTE_PATHS.customer.bookAppointment,
         icon: CalendarDays,
       },
