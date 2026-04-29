@@ -30,10 +30,58 @@ async function parseResponseBody<T>(response: Response) {
 
 function getBodyErrorMessage(body: unknown, fallbackMessage: string) {
   if (isApiResponse(body) && body.message) {
+    const validationMessages = extractErrorMessages(body.errors)
+    if (validationMessages.length > 0) {
+      return validationMessages.join(' ')
+    }
+
     return body.message
   }
 
+  if (body && typeof body === 'object') {
+    const record = body as Record<string, unknown>
+    const validationMessages = extractErrorMessages(record.errors)
+
+    if (validationMessages.length > 0) {
+      return validationMessages.join(' ')
+    }
+
+    if (typeof record.detail === 'string' && record.detail.trim()) {
+      return record.detail
+    }
+
+    if (typeof record.title === 'string' && record.title.trim()) {
+      return record.title
+    }
+  }
+
   return fallbackMessage
+}
+
+function extractErrorMessages(value: unknown): string[] {
+  if (!value) {
+    return []
+  }
+
+  if (typeof value === 'string') {
+    return value.trim() ? [value.trim()] : []
+  }
+
+  if (Array.isArray(value)) {
+    return [...new Set(value.flatMap((entry) => extractErrorMessages(entry)))]
+  }
+
+  if (typeof value === 'object') {
+    return [
+      ...new Set(
+        Object.values(value as Record<string, unknown>).flatMap((entry) =>
+          extractErrorMessages(entry),
+        ),
+      ),
+    ]
+  }
+
+  return []
 }
 
 function createRequestBody(body: unknown) {

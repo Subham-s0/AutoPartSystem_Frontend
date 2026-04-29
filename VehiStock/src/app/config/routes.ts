@@ -134,8 +134,8 @@ const pageMetaEntries: Array<{ path: string; meta: PageMeta }> = [
   {
     path: ROUTE_PATHS.customer.bookAppointment,
     meta: {
-      title: 'Book Appointment',
-      subtitle: 'Schedule your next service visit with the workshop.',
+      title: 'Appointments',
+      subtitle: 'Review booked visits and request a new appointment.',
     },
   },
   {
