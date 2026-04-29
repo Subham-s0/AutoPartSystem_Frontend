@@ -4,6 +4,7 @@ export const API_ROUTES = {
     refresh: '/api/auth/refresh',
     logout: '/api/auth/logout',
     customerRegister: '/api/auth/register/customer',
+    staffRegister: '/api/auth/register/staff',
     googleLogin: '/api/auth/login/google',
   },
   notifications: {
@@ -20,5 +21,14 @@ export const API_ROUTES = {
   },
   admin: {
     notifications: '/api/admin/notifications',
+    staff: '/api/admin/staff',
+  },
+  staff: {
+    salesInvoices: '/api/staff/sales-invoices',
+    customerReports: {
+      regulars: '/api/staff/reports/customers/regulars',
+      highSpenders: '/api/staff/reports/customers/high-spenders',
+      pendingCredits: '/api/staff/reports/customers/pending-credits',
+    },
   },
 } as const

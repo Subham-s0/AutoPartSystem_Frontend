@@ -1,5 +1,6 @@
 import { API_ROUTES } from '@/constants/api-routes'
 import { apiRequest } from '@/services/api-client'
+import type { RegisterStaffInput } from '@/features/staff-management/types/staff-management'
 import type {
   GoogleLoginInput,
   LoginCredentials,
@@ -49,5 +50,12 @@ export function registerCustomer(input: RegisterCustomerInput) {
     body: input,
     skipAuth: true,
     skipAuthRefresh: true,
+  })
+}
+
+export function registerStaff(input: RegisterStaffInput) {
+  return apiRequest(API_ROUTES.auth.staffRegister, {
+    method: 'POST',
+    body: input,
   })
 }
