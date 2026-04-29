@@ -92,8 +92,8 @@ const pageMetaEntries: Array<{ path: string; meta: PageMeta }> = [
   {
     path: ROUTE_PATHS.staff.customerSales,
     meta: {
-      title: 'Customer Sales',
-      subtitle: 'Process part sales and customer-facing orders.',
+      title: 'Sales Invoices',
+      subtitle: 'Create, review, and send part sales invoices.',
     },
   },
   {

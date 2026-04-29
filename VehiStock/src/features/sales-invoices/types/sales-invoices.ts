@@ -5,7 +5,6 @@ export interface CreateSalesInvoiceItemInput {
 }
 
 export interface CreateSalesInvoiceInput {
-  invoiceNo: string
   customerId: number
   vehicleId: number
   invoiceDate: string
@@ -15,6 +14,34 @@ export interface CreateSalesInvoiceInput {
   creditDueDate?: string
   paymentType: number
   items: CreateSalesInvoiceItemInput[]
+}
+
+export interface SalesInvoiceVehicleLookup {
+  vehicleId: number
+  vehicleNumber: string
+  make: string
+  model: string
+}
+
+export interface SalesInvoiceCustomerLookup {
+  customerId: number
+  fullName: string
+  email: string
+  phoneNumber?: string | null
+  vehicles: SalesInvoiceVehicleLookup[]
+}
+
+export interface SalesInvoicePartLookup {
+  partId: number
+  partName: string
+  brand: string
+  unitPrice: number
+  stockQty: number
+}
+
+export interface SalesInvoiceLookup {
+  customers: SalesInvoiceCustomerLookup[]
+  parts: SalesInvoicePartLookup[]
 }
 
 export interface SalesInvoiceItem {

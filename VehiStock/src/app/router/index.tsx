@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout } from '@/app/layouts/admin-layout'
 import { CustomerLayout } from '@/app/layouts/customer-layout'
 import { PublicLayout } from '@/app/layouts/public-layout'
@@ -27,7 +27,6 @@ import { NotFoundPage } from '@/pages/public/not-found-page'
 import { RegisterPage } from '@/pages/public/register-page'
 import { AppointmentsPage } from '@/pages/staff/appointments-page'
 import { CustomerReportsPage } from '@/pages/staff/customer-reports-page'
-import { CustomerSalesPage } from '@/pages/staff/customer-sales-page'
 import { SalesInvoicesPage } from '@/pages/staff/sales-invoices-page'
 import { StaffDashboardPage } from '@/pages/staff/staff-dashboard-page'
 
@@ -62,7 +61,10 @@ export function AppRouter() {
         <Route element={<RoleRoute allowedRoles={[ROLE_NAMES.staff]} />}>
           <Route path="staff" element={<StaffLayout />}>
             <Route index element={<StaffDashboardPage />} />
-            <Route path="customer-sales" element={<CustomerSalesPage />} />
+            <Route
+              path="customer-sales"
+              element={<Navigate replace to={ROUTE_PATHS.staff.salesInvoices} />}
+            />
             <Route path="appointments" element={<AppointmentsPage />} />
             <Route path="sales-invoices" element={<SalesInvoicesPage />} />
             <Route

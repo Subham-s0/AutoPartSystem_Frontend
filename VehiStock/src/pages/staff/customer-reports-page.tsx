@@ -45,7 +45,15 @@ function formatCurrency(value: number) {
   }).format(value)
 }
 
-export function CustomerReportsPage() {
+interface CustomerReportsPageProps {
+  title?: string
+  description?: string
+}
+
+export function CustomerReportsPage({
+  title = 'Customer Reports',
+  description = 'Review customer activity patterns and credit exposure from the staff reporting endpoints.',
+}: CustomerReportsPageProps) {
   const [activeTab, setActiveTab] = React.useState<ReportTab>('regulars')
   const [error, setError] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
@@ -136,8 +144,8 @@ export function CustomerReportsPage() {
 
   return (
     <PageSection
-      description="Review customer activity patterns and credit exposure from the staff reporting endpoints."
-      title="Customer Reports"
+      description={description}
+      title={title}
     >
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-3">

@@ -4,7 +4,6 @@ import {
   Building2,
   CalendarDays,
   CarFront,
-  ClipboardList,
   History,
   LayoutDashboard,
   ShoppingCart,
@@ -70,11 +69,6 @@ const staffNavigation: NavigationSection[] = [
         icon: LayoutDashboard,
       },
       {
-        label: 'Customer Sales',
-        to: ROUTE_PATHS.staff.customerSales,
-        icon: ShoppingCart,
-      },
-      {
         label: 'Appointments',
         to: ROUTE_PATHS.staff.appointments,
         icon: CalendarDays,
@@ -87,7 +81,7 @@ const staffNavigation: NavigationSection[] = [
       {
         label: 'Sales Invoices',
         to: ROUTE_PATHS.staff.salesInvoices,
-        icon: ClipboardList,
+        icon: ShoppingCart,
       },
       {
         label: 'Customer Reports',

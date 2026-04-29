@@ -25,6 +25,7 @@ export const API_ROUTES = {
   },
   staff: {
     salesInvoices: '/api/staff/sales-invoices',
+    salesInvoiceLookups: '/api/staff/sales-invoices/lookups',
     customerReports: {
       regulars: '/api/staff/reports/customers/regulars',
       highSpenders: '/api/staff/reports/customers/high-spenders',
