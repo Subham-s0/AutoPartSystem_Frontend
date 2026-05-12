@@ -24,6 +24,8 @@ export const ROUTE_PATHS = {
   customer: {
     dashboard: '/customer',
     vehicles: '/customer/vehicles',
+    vehicleNew: '/customer/vehicles/new',
+    vehicleDetails: (vehicleId: number | string) => `/customer/vehicles/${vehicleId}`,
     bookAppointment: '/customer/book-appointment',
     partRequests: '/customer/part-requests',
     history: '/customer/history',

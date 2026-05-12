@@ -4,8 +4,25 @@ export interface CustomerVehicle {
   make: string
   model: string
   manufactureYear: number
+  engineNo?: string | null
+  chassisNo?: string | null
   mileageKm: number
   vehiclePhotoUrl?: string | null
+  notes?: string | null
+}
+
+export interface VehicleInput {
+  vehicleNumber: string
+  make: string
+  model: string
+  manufactureYear: number
+  engineNo?: string | null
+  chassisNo?: string | null
+  vehiclePhotoUrl?: string | null
+  vehiclePhoto?: File | null
+  removeVehiclePhoto?: boolean
+  mileageKm: number
+  notes?: string | null
 }
 
 export interface Appointment {
@@ -17,6 +34,14 @@ export interface Appointment {
   problemDescription: string
   status: string
   bookedAt: string
+}
+
+export interface AppointmentQueryInput {
+  pageNumber?: number
+  pageSize?: number
+  searchText?: string
+  status?: string
+  sortBy?: string
 }
 
 export interface BookAppointmentInput {

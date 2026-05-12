@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 interface DataColumn<T> {
   key: keyof T | string
   header: string
+  className?: string
   render: (item: T) => ReactNode
 }
 
@@ -23,7 +24,9 @@ export function DataTable<T>({
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={String(column.key)}>{column.header}</th>
+              <th className={column.className} key={String(column.key)}>
+                {column.header}
+              </th>
             ))}
           </tr>
         </thead>
@@ -38,7 +41,9 @@ export function DataTable<T>({
             rows.map((row, index) => (
               <tr key={index}>
                 {columns.map((column) => (
-                  <td key={String(column.key)}>{column.render(row)}</td>
+                  <td className={column.className} key={String(column.key)}>
+                    {column.render(row)}
+                  </td>
                 ))}
               </tr>
             ))

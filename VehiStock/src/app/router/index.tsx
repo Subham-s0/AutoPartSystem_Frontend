@@ -18,6 +18,7 @@ import { BookAppointmentPage } from '@/pages/customer/book-appointment-page'
 import { CustomerHistoryPage } from '@/pages/customer/history-page'
 import { PartRequestsPage } from '@/pages/customer/part-requests-page'
 import { ProfilePage } from '@/pages/customer/profile-page'
+import { VehicleDetailsPage } from '@/pages/customer/vehicle-details-page'
 import { ReviewsPage } from '@/pages/customer/reviews-page'
 import { VehiclesPage } from '@/pages/customer/vehicles-page'
 import { HomePage } from '@/pages/public/home-page'
@@ -78,6 +79,8 @@ export function AppRouter() {
           <Route path="customer" element={<CustomerLayout />}>
             <Route index element={<CustomerDashboardPage />} />
             <Route path="vehicles" element={<VehiclesPage />} />
+            <Route path="vehicles/new" element={<VehicleDetailsPage />} />
+            <Route path="vehicles/:vehicleId" element={<VehicleDetailsPage />} />
             <Route
               path="book-appointment"
               element={<BookAppointmentPage />}

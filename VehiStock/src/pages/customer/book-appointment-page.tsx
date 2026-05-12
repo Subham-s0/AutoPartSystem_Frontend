@@ -1,5 +1,15 @@
 import * as React from 'react'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -7,16 +17,42 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { DataTable } from '@/components/shared/data-table'
 import { PageSection } from '@/components/shared/page-section'
 import {
   bookAppointment,
+  cancelAppointment,
   getAppointments,
   getCustomerVehicles,
 } from '@/features/customer-portal/api/customer-portal-api'
+import type { Appointment } from '@/features/customer-portal/types/customer-portal'
+import {
+  getVehicleImageSrc,
+  handleVehicleImageError,
+} from '@/features/customer-portal/utils/vehicle-images'
 import { usePagination } from '@/hooks/use-pagination'
 import { formatDateOnly, formatDateTime } from '@/lib/date'
-import { ApiError } from '@/types/api'
+import { ApiError, type PaginatedResponse } from '@/types/api'
+import { ArrowDownUp, Eye, Filter, MoreVertical, Plus, Search, XCircle } from 'lucide-react'
+
+const APPOINTMENT_STATUSES = ['Pending', 'Confirmed', 'Completed', 'Cancelled']
+
+const APPOINTMENT_SORT_OPTIONS = [
+  { label: 'Newest first', value: 'newest' },
+  { label: 'Oldest first', value: 'oldest' },
+  { label: 'Preferred date first', value: 'preferredDateAsc' },
+  { label: 'Preferred date latest', value: 'preferredDateDesc' },
+]
 
 function getAppointmentBadge(status: string) {
   switch (status.toLowerCase()) {
@@ -30,41 +66,53 @@ function getAppointmentBadge(status: string) {
   }
 }
 
+function getSortLabel(value: string) {
+  return APPOINTMENT_SORT_OPTIONS.find((option) => option.value === value)?.label ?? 'Newest first'
+}
+
+function canCancelAppointment(appointment: Appointment) {
+  return appointment.status.toLowerCase() === 'pending'
+}
+
 export function BookAppointmentPage() {
   const pagination = usePagination(1, 5)
   const [vehicles, setVehicles] = React.useState<
     Awaited<ReturnType<typeof getCustomerVehicles>>
   >([])
-  const [appointments, setAppointments] = React.useState<
-    Awaited<ReturnType<typeof getAppointments>>
-  >([])
+  const [appointmentsResult, setAppointmentsResult] =
+    React.useState<PaginatedResponse<Appointment> | null>(null)
   const [vehicleId, setVehicleId] = React.useState('')
   const [preferredDate, setPreferredDate] = React.useState('')
   const [serviceType, setServiceType] = React.useState('')
   const [problemDescription, setProblemDescription] = React.useState('')
-  const [isLoading, setIsLoading] = React.useState(true)
+  const [searchText, setSearchText] = React.useState('')
+  const [statusFilter, setStatusFilter] = React.useState('')
+  const [sortBy, setSortBy] = React.useState('newest')
+  const [appointmentReloadKey, setAppointmentReloadKey] = React.useState(0)
+  const [isVehiclesLoading, setIsVehiclesLoading] = React.useState(true)
+  const [isAppointmentsLoading, setIsAppointmentsLoading] = React.useState(true)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [isCancelling, setIsCancelling] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null)
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [selectedAppointment, setSelectedAppointment] =
+    React.useState<Appointment | null>(null)
+  const [appointmentToCancel, setAppointmentToCancel] =
+    React.useState<Appointment | null>(null)
 
   React.useEffect(() => {
     let isMounted = true
 
-    async function loadData() {
+    async function loadVehicles() {
       try {
-        setError(null)
-        const [nextVehicles, nextAppointments] = await Promise.all([
-          getCustomerVehicles(),
-          getAppointments(),
-        ])
+        const nextVehicles = await getCustomerVehicles()
 
         if (!isMounted) {
           return
         }
 
         setVehicles(nextVehicles)
-        setAppointments(nextAppointments)
         setVehicleId((currentVehicleId) =>
           currentVehicleId || (nextVehicles[0] ? String(nextVehicles[0].vehicleId) : ''),
         )
@@ -76,21 +124,72 @@ export function BookAppointmentPage() {
         setError(
           loadError instanceof ApiError || loadError instanceof Error
             ? loadError.message
-            : 'Unable to load appointment data.',
+            : 'Unable to load vehicles.',
         )
       } finally {
         if (isMounted) {
-          setIsLoading(false)
+          setIsVehiclesLoading(false)
         }
       }
     }
 
-    void loadData()
+    void loadVehicles()
 
     return () => {
       isMounted = false
     }
   }, [])
+
+  React.useEffect(() => {
+    let isMounted = true
+
+    async function loadAppointments() {
+      try {
+        setIsAppointmentsLoading(true)
+        const nextAppointments = await getAppointments({
+          pageNumber: pagination.page,
+          pageSize: pagination.pageSize,
+          searchText: searchText.trim() || undefined,
+          status: statusFilter || undefined,
+          sortBy,
+        })
+
+        if (!isMounted) {
+          return
+        }
+
+        setAppointmentsResult(nextAppointments)
+      } catch (loadError) {
+        if (!isMounted) {
+          return
+        }
+
+        setAppointmentsResult(null)
+        setError(
+          loadError instanceof ApiError || loadError instanceof Error
+            ? loadError.message
+            : 'Unable to load appointments.',
+        )
+      } finally {
+        if (isMounted) {
+          setIsAppointmentsLoading(false)
+        }
+      }
+    }
+
+    void loadAppointments()
+
+    return () => {
+      isMounted = false
+    }
+  }, [
+    appointmentReloadKey,
+    pagination.page,
+    pagination.pageSize,
+    searchText,
+    sortBy,
+    statusFilter,
+  ])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -99,20 +198,20 @@ export function BookAppointmentPage() {
     setIsSubmitting(true)
 
     try {
-      const createdAppointment = await bookAppointment({
+      await bookAppointment({
         vehicleId: Number(vehicleId),
         preferredDate,
         serviceType,
         problemDescription,
       })
 
-      setAppointments((current) => [createdAppointment, ...current])
       setServiceType('')
       setProblemDescription('')
       setPreferredDate('')
       setSuccessMessage('Appointment booked successfully.')
       setIsDialogOpen(false)
       pagination.setPage(1)
+      setAppointmentReloadKey((currentKey) => currentKey + 1)
     } catch (submitError) {
       setError(
         submitError instanceof ApiError || submitError instanceof Error
@@ -124,29 +223,58 @@ export function BookAppointmentPage() {
     }
   }
 
-  const pagedAppointments = React.useMemo(() => {
-    const start = (pagination.page - 1) * pagination.pageSize
-    return appointments.slice(start, start + pagination.pageSize)
-  }, [appointments, pagination.page, pagination.pageSize])
+  function resetToFirstPage() {
+    pagination.setPage(1)
+  }
 
-  const totalPages = appointments.length === 0
-    ? 1
-    : Math.ceil(appointments.length / pagination.pageSize)
+  async function handleCancelAppointment() {
+    if (!appointmentToCancel) {
+      return
+    }
 
-  const startRecord = appointments.length === 0
-    ? 0
-    : (pagination.page - 1) * pagination.pageSize + 1
+    setError(null)
+    setSuccessMessage(null)
+    setIsCancelling(true)
 
-  const endRecord = appointments.length === 0
-    ? 0
-    : startRecord + pagedAppointments.length - 1
+    try {
+      await cancelAppointment(appointmentToCancel.appointmentId)
+      setAppointmentToCancel(null)
+      setSuccessMessage('Appointment cancelled successfully.')
+      setAppointmentReloadKey((currentKey) => currentKey + 1)
+    } catch (cancelError) {
+      setError(
+        cancelError instanceof ApiError || cancelError instanceof Error
+          ? cancelError.message
+          : 'Unable to cancel appointment.',
+      )
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
+  const appointments = appointmentsResult?.items ?? []
+  const totalRecords = appointmentsResult?.totalRecords ?? 0
+  const totalPages =
+    appointmentsResult && appointmentsResult.totalPages > 0
+      ? appointmentsResult.totalPages
+      : 1
+  const startRecord =
+    totalRecords === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1
+  const endRecord =
+    totalRecords === 0
+      ? 0
+      : Math.min(startRecord + appointments.length - 1, totalRecords)
+  const hasFilters = Boolean(searchText.trim() || statusFilter)
+  const vehicleImageById = React.useMemo(() => {
+    return new Map(vehicles.map((vehicle) => [vehicle.vehicleId, vehicle.vehiclePhotoUrl]))
+  }, [vehicles])
 
   return (
     <PageSection
       actions={(
         <button
           className="tb-btn primary"
-          disabled={isLoading || vehicles.length === 0}
+          disabled={isVehiclesLoading || vehicles.length === 0}
           onClick={() => {
             setError(null)
             setSuccessMessage(null)
@@ -154,6 +282,7 @@ export function BookAppointmentPage() {
           }}
           type="button"
         >
+          <Plus size={15} />
           New appointment
         </button>
       )}
@@ -166,7 +295,7 @@ export function BookAppointmentPage() {
         </div>
       ) : null}
 
-      {vehicles.length === 0 && !isLoading ? (
+      {vehicles.length === 0 && !isVehiclesLoading ? (
         <div className="mb-4 rounded-2xl border border-dashed border-[var(--vs-border)] bg-[var(--vs-bg)] px-4 py-3 text-sm text-[var(--vs-muted)]">
           Register at least one vehicle first before booking an appointment.
         </div>
@@ -179,11 +308,96 @@ export function BookAppointmentPage() {
       ) : null}
 
       <div className="space-y-4">
-        <div>
-          <div className="page-section-title">Submitted appointments</div>
-          <p className="page-section-desc">
-            Track preferred dates, service types, booking time, and current status.
-          </p>
+        <div className="flex items-center justify-between gap-3 max-md:flex-col max-md:items-stretch">
+          <label className="flex min-h-[38px] w-[min(440px,100%)] items-center gap-2 rounded-full border border-[var(--vs-border)] bg-[var(--vs-bg)] px-3 text-[var(--vs-muted)] max-md:w-full">
+            <Search size={16} />
+            <input
+              aria-label="Search appointments"
+              className="w-full min-w-0 border-0 bg-transparent text-[13px] text-[var(--vs-text)] outline-none placeholder:text-[var(--vs-faint)]"
+              onChange={(event) => {
+                resetToFirstPage()
+                setSearchText(event.target.value)
+              }}
+              placeholder="Vehicle number or service type"
+              type="search"
+              value={searchText}
+            />
+          </label>
+
+          <div className="flex items-center justify-end gap-2 max-md:w-full max-md:flex-wrap max-md:justify-start">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="inline-flex min-h-[38px] max-w-[220px] cursor-pointer items-center justify-center gap-[7px] rounded-full border border-[var(--vs-border)] bg-white px-3.5 text-xs font-bold text-[var(--vs-green-800)] hover:bg-[var(--vs-green-100)] data-[state=open]:bg-[var(--vs-green-100)]"
+                  type="button"
+                >
+                  <Filter size={15} />
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                    {statusFilter || 'All statuses'}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="!w-[190px] !min-w-[190px]">
+                <DropdownMenuLabel>Status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup
+                  onValueChange={(value) => {
+                    resetToFirstPage()
+                    setStatusFilter(value === 'all' ? '' : value)
+                  }}
+                  value={statusFilter || 'all'}
+                >
+                  <DropdownMenuRadioItem className="gap-2 py-[7px] pl-2.5 pr-7 text-xs" value="all">
+                    All statuses
+                  </DropdownMenuRadioItem>
+                  {APPOINTMENT_STATUSES.map((status) => (
+                    <DropdownMenuRadioItem
+                      className="gap-2 py-[7px] pl-2.5 pr-7 text-xs"
+                      key={status}
+                      value={status}
+                    >
+                      {status}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="inline-flex min-h-[38px] max-w-[220px] cursor-pointer items-center justify-center gap-[7px] rounded-full border border-[var(--vs-border)] bg-white px-3.5 text-xs font-bold text-[var(--vs-green-800)] hover:bg-[var(--vs-green-100)] data-[state=open]:bg-[var(--vs-green-100)]"
+                  type="button"
+                >
+                  <ArrowDownUp size={15} />
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                    {getSortLabel(sortBy)}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="!w-[190px] !min-w-[190px]">
+                <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup
+                  onValueChange={(value) => {
+                    resetToFirstPage()
+                    setSortBy(value)
+                  }}
+                  value={sortBy}
+                >
+                  {APPOINTMENT_SORT_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem
+                      className="gap-2 py-[7px] pl-2.5 pr-7 text-xs"
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         <DataTable
@@ -191,21 +405,37 @@ export function BookAppointmentPage() {
             {
               key: 'vehicle',
               header: 'Vehicle',
-              render: (item) => item.vehicleNumber,
+              className: 'w-[17%]',
+              render: (item) => (
+                <div className="flex min-w-0 items-center gap-[9px]">
+                  <img
+                    alt=""
+                    className="h-8 w-8 shrink-0 rounded-full border border-[var(--vs-border)] bg-[var(--vs-bg)] object-cover"
+                    onError={handleVehicleImageError}
+                    src={getVehicleImageSrc(vehicleImageById.get(item.vehicleId))}
+                  />
+                  <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-bold text-[var(--vs-text)]">
+                    {item.vehicleNumber}
+                  </span>
+                </div>
+              ),
             },
             {
               key: 'date',
               header: 'Preferred Date',
+              className: 'w-32',
               render: (item) => formatDateOnly(item.preferredDate),
             },
             {
               key: 'serviceType',
               header: 'Service Type',
+              className: 'w-[24%]',
               render: (item) => item.serviceType,
             },
             {
               key: 'status',
               header: 'Status',
+              className: 'w-[104px]',
               render: (item) => (
                 <span className={`badge ${getAppointmentBadge(item.status)}`}>
                   {item.status}
@@ -215,22 +445,61 @@ export function BookAppointmentPage() {
             {
               key: 'bookedAt',
               header: 'Booked At',
+              className: 'w-[150px]',
               render: (item) => formatDateTime(item.bookedAt),
+            },
+            {
+              key: 'actions',
+              header: '',
+              className: '!w-9 !min-w-9 !max-w-9 !px-1 !text-center whitespace-nowrap',
+              render: (item) => (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      aria-label={`Actions for appointment ${item.appointmentId}`}
+                      className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-[var(--vs-muted)] hover:bg-[var(--vs-green-100)] hover:text-[var(--vs-green-800)] data-[state=open]:bg-[var(--vs-green-100)] data-[state=open]:text-[var(--vs-green-800)]"
+                      type="button"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="!w-[170px] !min-w-[170px]">
+                    <DropdownMenuItem
+                      className="gap-2 px-2.5 py-2 text-xs"
+                      onSelect={() => setSelectedAppointment(item)}
+                    >
+                      <Eye size={15} />
+                      View details
+                    </DropdownMenuItem>
+                    {canCancelAppointment(item) ? (
+                      <DropdownMenuItem
+                        className="gap-2 px-2.5 py-2 text-xs !text-[var(--vs-red)]"
+                        onSelect={() => setAppointmentToCancel(item)}
+                      >
+                        <XCircle size={15} />
+                        Cancel appointment
+                      </DropdownMenuItem>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ),
             },
           ]}
           emptyMessage={
-            isLoading
+            isAppointmentsLoading
               ? 'Loading appointments...'
-              : 'No appointments booked yet.'
+              : hasFilters
+                ? 'No appointments match these filters.'
+                : 'No appointments booked yet.'
           }
-          rows={pagedAppointments}
+          rows={appointments}
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--vs-muted)]">
+        <div className="flex items-center justify-between gap-3 border-t border-[var(--vs-soft-border)] pt-3.5 text-xs text-[var(--vs-muted)] max-md:flex-col max-md:items-start">
           <div>
-            {appointments.length === 0
+            {totalRecords === 0
               ? 'No records available.'
-              : `Showing ${startRecord}-${endRecord} of ${appointments.length}`}
+              : `Showing ${startRecord}-${endRecord} of ${totalRecords}`}
           </div>
           <div className="flex items-center gap-2">
             <span>
@@ -238,7 +507,7 @@ export function BookAppointmentPage() {
             </span>
             <button
               className="tb-btn"
-              disabled={isLoading || pagination.page <= 1}
+              disabled={isAppointmentsLoading || pagination.page <= 1}
               onClick={() => pagination.setPage((currentPage) => Math.max(1, currentPage - 1))}
               type="button"
             >
@@ -246,7 +515,11 @@ export function BookAppointmentPage() {
             </button>
             <button
               className="tb-btn"
-              disabled={isLoading || pagination.page >= totalPages || appointments.length === 0}
+              disabled={
+                isAppointmentsLoading ||
+                totalRecords === 0 ||
+                pagination.page >= totalPages
+              }
               onClick={() => pagination.setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
               type="button"
             >
@@ -270,7 +543,7 @@ export function BookAppointmentPage() {
               Vehicle
               <select
                 className="form-select"
-                disabled={isLoading || vehicles.length === 0}
+                disabled={isVehiclesLoading || vehicles.length === 0}
                 onChange={(event) => setVehicleId(event.target.value)}
                 required
                 value={vehicleId}
@@ -340,7 +613,7 @@ export function BookAppointmentPage() {
               </button>
               <button
                 className="tb-btn primary"
-                disabled={isSubmitting || isLoading || vehicles.length === 0}
+                disabled={isSubmitting || isVehiclesLoading || vehicles.length === 0}
                 type="submit"
               >
                 {isSubmitting ? 'Requesting...' : 'Request appointment'}
@@ -349,6 +622,115 @@ export function BookAppointmentPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedAppointment(null)
+          }
+        }}
+        open={Boolean(selectedAppointment)}
+      >
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Appointment details</DialogTitle>
+            <DialogDescription>
+              Full information for the selected appointment.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedAppointment ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="min-w-0 rounded-lg border border-[var(--vs-border)] bg-[var(--vs-bg)] p-3">
+                <div className="text-[11px] font-bold uppercase text-[var(--vs-muted)]">Vehicle</div>
+                <div className="mt-1.5 text-[13px] leading-6 text-[var(--vs-text)] [overflow-wrap:anywhere]">
+                  {selectedAppointment.vehicleNumber}
+                </div>
+              </div>
+
+              <div className="min-w-0 rounded-lg border border-[var(--vs-border)] bg-[var(--vs-bg)] p-3">
+                <div className="text-[11px] font-bold uppercase text-[var(--vs-muted)]">Status</div>
+                <div className="mt-1.5 text-[13px] leading-6 text-[var(--vs-text)] [overflow-wrap:anywhere]">
+                  <span className={`badge ${getAppointmentBadge(selectedAppointment.status)}`}>
+                    {selectedAppointment.status}
+                  </span>
+                </div>
+              </div>
+
+              <div className="min-w-0 rounded-lg border border-[var(--vs-border)] bg-[var(--vs-bg)] p-3">
+                <div className="text-[11px] font-bold uppercase text-[var(--vs-muted)]">Preferred date</div>
+                <div className="mt-1.5 text-[13px] leading-6 text-[var(--vs-text)] [overflow-wrap:anywhere]">
+                  {formatDateOnly(selectedAppointment.preferredDate)}
+                </div>
+              </div>
+
+              <div className="min-w-0 rounded-lg border border-[var(--vs-border)] bg-[var(--vs-bg)] p-3">
+                <div className="text-[11px] font-bold uppercase text-[var(--vs-muted)]">Booked at</div>
+                <div className="mt-1.5 text-[13px] leading-6 text-[var(--vs-text)] [overflow-wrap:anywhere]">
+                  {formatDateTime(selectedAppointment.bookedAt)}
+                </div>
+              </div>
+
+              <div className="min-w-0 rounded-lg border border-[var(--vs-border)] bg-[var(--vs-bg)] p-3 md:col-span-2">
+                <div className="text-[11px] font-bold uppercase text-[var(--vs-muted)]">Service type</div>
+                <div className="mt-1.5 text-[13px] leading-6 text-[var(--vs-text)] [overflow-wrap:anywhere]">
+                  {selectedAppointment.serviceType}
+                </div>
+              </div>
+
+              <div className="min-w-0 rounded-lg border border-[var(--vs-border)] bg-[var(--vs-bg)] p-3 md:col-span-2">
+                <div className="text-[11px] font-bold uppercase text-[var(--vs-muted)]">Problem description</div>
+                <div className="mt-1.5 text-[13px] leading-6 text-[var(--vs-text)] [overflow-wrap:anywhere]">
+                  {selectedAppointment.problemDescription}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <button
+              className="tb-btn"
+              onClick={() => setSelectedAppointment(null)}
+              type="button"
+            >
+              Close
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!open && !isCancelling) {
+            setAppointmentToCancel(null)
+          }
+        }}
+        open={Boolean(appointmentToCancel)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel appointment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will cancel the pending appointment for {appointmentToCancel?.vehicleNumber}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>
+              Keep appointment
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isCancelling}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleCancelAppointment()
+              }}
+              variant="destructive"
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel appointment'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageSection>
   )
 }
