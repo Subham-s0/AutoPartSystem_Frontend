@@ -4,9 +4,12 @@ import {
   Building2,
   CalendarDays,
   CarFront,
+  CreditCard,
+  FileText,
   History,
   LayoutDashboard,
   ShoppingCart,
+  Star,
   User,
   UserCog,
   Warehouse,
@@ -94,7 +97,7 @@ const staffNavigation: NavigationSection[] = [
 
 const customerNavigation: NavigationSection[] = [
   {
-    title: 'Account',
+    title: '',
     items: [
       {
         label: 'Dashboard',
@@ -111,15 +114,20 @@ const customerNavigation: NavigationSection[] = [
         to: ROUTE_PATHS.customer.bookAppointment,
         icon: CalendarDays,
       },
-    ],
-  },
-  {
-    title: 'History',
-    items: [
       {
-        label: 'Part Requests',
+        label: 'Parts',
         to: ROUTE_PATHS.customer.partRequests,
         icon: Wrench,
+      },
+      {
+        label: 'Service Invoices',
+        to: ROUTE_PATHS.customer.serviceInvoices,
+        icon: FileText,
+      },
+      {
+        label: 'Payments',
+        to: ROUTE_PATHS.customer.payments,
+        icon: CreditCard,
       },
       {
         label: 'History',
@@ -127,9 +135,14 @@ const customerNavigation: NavigationSection[] = [
         icon: History,
       },
       {
+        label: 'Notifications',
+        to: ROUTE_PATHS.customer.notifications,
+        icon: Bell,
+      },
+      {
         label: 'Reviews',
         to: ROUTE_PATHS.customer.reviews,
-        icon: Bell,
+        icon: Star,
       },
       {
         label: 'Profile',

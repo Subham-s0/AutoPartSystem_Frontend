@@ -13,8 +13,9 @@ import {
   getCurrentUserNotifications,
   markCurrentUserNotificationAsRead,
 } from '@/features/notifications/api/user-notifications-api'
+import { getCustomerNotificationActionLink } from '@/features/notifications/notification-action-links'
 import { useAuth } from '@/hooks/use-auth'
-import { formatDateTime } from '@/lib/date'
+import { formatDateTime } from '@/utils/date'
 import { ApiError } from '@/types/api'
 import type { NotificationItem } from '@/features/notifications/types/notifications'
 import type { PropsWithChildren, ReactNode } from 'react'
@@ -41,6 +42,12 @@ export function AppHeader({ actions }: PropsWithChildren<AppHeaderProps>) {
   const [notifications, setNotifications] = React.useState<NotificationItem[]>([])
 
   const unreadCount = notifications.filter((item) => !item.isRead).length
+  const notificationsPagePath =
+    user?.role === ROLE_NAMES.admin
+      ? ROUTE_PATHS.admin.notifications
+      : user?.role === ROLE_NAMES.customer
+        ? ROUTE_PATHS.customer.notifications
+        : null
 
   const loadNotifications = React.useCallback(async () => {
     if (!user) {
@@ -52,7 +59,7 @@ export function AppHeader({ actions }: PropsWithChildren<AppHeaderProps>) {
     setNotificationError(null)
 
     try {
-      const result = await getCurrentUserNotifications(1, 6)
+      const result = await getCurrentUserNotifications({ pageNumber: 1, pageSize: 6 })
       setNotifications(result.items)
     } catch (error) {
       setNotificationError(
@@ -128,8 +135,8 @@ export function AppHeader({ actions }: PropsWithChildren<AppHeaderProps>) {
                     ? `${unreadCount} unread item${unreadCount === 1 ? '' : 's'}`
                     : 'You are up to date.'}
                 </div>
-                {user?.role === ROLE_NAMES.admin ? (
-                  <Link className="notif-panel-link" to={ROUTE_PATHS.admin.notifications}>
+                {notificationsPagePath ? (
+                  <Link className="notif-panel-link" to={notificationsPagePath}>
                     Open page
                   </Link>
                 ) : null}
@@ -144,29 +151,47 @@ export function AppHeader({ actions }: PropsWithChildren<AppHeaderProps>) {
               <div className="notif-panel-empty">No notifications available.</div>
             ) : (
               <div className="notif-list">
-                {notifications.map((item) => (
-                  <div className="notif-item" key={item.notificationId}>
-                    <div className="notif-item-top">
-                      <div className="notif-item-title">{item.title}</div>
-                      {!item.isRead ? (
-                        <span className="badge ba">Unread</span>
-                      ) : null}
+                {notifications.map((item) => {
+                  const actionLink =
+                    user?.role === ROLE_NAMES.customer
+                      ? getCustomerNotificationActionLink(item)
+                      : null
+
+                  return (
+                    <div className="notif-item" key={item.notificationId}>
+                      <div className="notif-item-top">
+                        <div className="notif-item-title">{item.title}</div>
+                        {!item.isRead ? (
+                          <span className="badge ba">Unread</span>
+                        ) : null}
+                      </div>
+                      <div className="notif-item-message">{item.message}</div>
+                      <div className="notif-item-meta">
+                        <span>{formatDateTime(item.createdAt)}</span>
+                        <div className="flex items-center gap-2">
+                          {actionLink ? (
+                            <Link
+                              className="notif-item-action"
+                              onClick={() => setOpen(false)}
+                              to={actionLink.to}
+                            >
+                              {actionLink.label}
+                            </Link>
+                          ) : null}
+                          {!item.isRead ? (
+                            <button
+                              className="notif-item-action"
+                              onClick={() => void handleMarkAsRead(item.notificationId)}
+                              type="button"
+                            >
+                              Mark read
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
-                    <div className="notif-item-message">{item.message}</div>
-                    <div className="notif-item-meta">
-                      <span>{formatDateTime(item.createdAt)}</span>
-                      {!item.isRead ? (
-                        <button
-                          className="notif-item-action"
-                          onClick={() => void handleMarkAsRead(item.notificationId)}
-                          type="button"
-                        >
-                          Mark read
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </DropdownMenuContent>

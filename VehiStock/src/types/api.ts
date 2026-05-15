@@ -1,3 +1,10 @@
+export type SortDirection = 'Asc' | 'Desc'
+
+export interface SortRequest {
+  sortBy: string
+  sortDirection: SortDirection
+}
+
 export interface ApiResponse<T> {
   success: boolean
   message: string

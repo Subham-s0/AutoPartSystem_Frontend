@@ -9,7 +9,7 @@ import {
 import { mapAuthResponseToSession } from '@/features/auth/utils/session-mapper'
 import { clearAuthSession, loadAuthSession, onAuthSessionChange } from '@/services/auth-storage'
 import { tokenManager } from '@/services/token-manager'
-import { isDateExpired } from '@/lib/date'
+import { isDateExpired } from '@/utils/date'
 import type {
   GoogleLoginInput,
   AuthSession,

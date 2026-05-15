@@ -1,1 +1,0 @@
-Customer management feature workspace.

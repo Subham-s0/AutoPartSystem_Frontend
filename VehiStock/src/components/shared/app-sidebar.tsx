@@ -51,9 +51,9 @@ export function AppSidebar({
         </div>
       </div>
 
-      {sections.map((section) => (
-        <div key={section.title}>
-          <div className="sb-section">{section.title}</div>
+      {sections.map((section, sectionIndex) => (
+        <div key={`${section.title}-${sectionIndex}`}>
+          {section.title ? <div className="sb-section">{section.title}</div> : null}
           <ul className="sb-nav">
             {section.items.map((item) => (
               <li key={item.to}>

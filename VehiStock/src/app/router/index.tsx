@@ -7,29 +7,34 @@ import { ROUTE_PATHS } from '@/app/config/routes'
 import { ROLE_NAMES } from '@/constants/roles'
 import { ProtectedRoute } from './protected-route'
 import { RoleRoute } from './role-route'
-import { AdminDashboardPage } from '@/pages/admin/admin-dashboard-page'
-import { InventoryPage } from '@/pages/admin/inventory-page'
-import { NotificationsPage } from '@/pages/admin/notifications-page'
-import { ReportsPage } from '@/pages/admin/reports-page'
-import { StaffPage } from '@/pages/admin/staff-page'
-import { VendorPage } from '@/pages/admin/vendor-page'
-import { CustomerDashboardPage } from '@/pages/customer/customer-dashboard-page'
-import { BookAppointmentPage } from '@/pages/customer/book-appointment-page'
-import { CustomerHistoryPage } from '@/pages/customer/history-page'
-import { PartRequestsPage } from '@/pages/customer/part-requests-page'
-import { ProfilePage } from '@/pages/customer/profile-page'
-import { VehicleDetailsPage } from '@/pages/customer/vehicle-details-page'
-import { ReviewsPage } from '@/pages/customer/reviews-page'
-import { VehiclesPage } from '@/pages/customer/vehicles-page'
-import { HomePage } from '@/pages/public/home-page'
-import { AdminLoginPage } from '@/pages/public/admin-login-page'
-import { LoginPage } from '@/pages/public/login-page'
-import { NotFoundPage } from '@/pages/public/not-found-page'
-import { RegisterPage } from '@/pages/public/register-page'
-import { AppointmentsPage } from '@/pages/staff/appointments-page'
-import { CustomerReportsPage } from '@/pages/staff/customer-reports-page'
-import { SalesInvoicesPage } from '@/pages/staff/sales-invoices-page'
-import { StaffDashboardPage } from '@/pages/staff/staff-dashboard-page'
+import { AdminDashboardPage } from '@/features/dashboard/pages/admin/admin-dashboard-page'
+import { InventoryPage } from '@/features/inventory/pages/admin/inventory-page'
+import { NotificationsPage } from '@/features/notifications/pages/admin/notifications-page'
+import { ReportsPage } from '@/features/reports/pages/admin/reports-page'
+import { StaffPage } from '@/features/staff-management/pages/admin/staff-page'
+import { VendorPage } from '@/features/vendors/pages/admin/vendor-page'
+import { CustomerDashboardPage } from '@/features/dashboard/pages/customer/customer-dashboard-page'
+import { BookAppointmentPage } from '@/features/appointments/pages/customer/book-appointment-page'
+import { CustomerHistoryPage } from '@/features/history/pages/customer/history-page'
+import { ServiceHistoryDetailPage } from '@/features/history/pages/customer/service-history-detail-page'
+import { CustomerServiceInvoicesPage } from '@/features/service-invoices/pages/customer/customer-service-invoices-page'
+import { ServiceInvoicePaymentCallbackPage } from '@/features/payments/pages/customer/service-invoice-payment-callback-page'
+import { CustomerNotificationsPage } from '@/features/notifications/pages/customer/customer-notifications-page'
+import { CustomerPaymentsPage } from '@/features/payments/pages/customer/customer-payments-page'
+import { PartRequestsPage } from '@/features/part-requests/pages/customer/part-requests-page'
+import { ProfilePage } from '@/features/profile/pages/customer/profile-page'
+import { VehicleDetailsPage } from '@/features/vehicles/pages/customer/vehicle-details-page'
+import { ReviewsPage } from '@/features/reviews/pages/customer/reviews-page'
+import { VehiclesPage } from '@/features/vehicles/pages/customer/vehicles-page'
+import { HomePage } from '@/features/public/pages/home-page'
+import { AdminLoginPage } from '@/features/auth/pages/admin-login-page'
+import { LoginPage } from '@/features/auth/pages/login-page'
+import { NotFoundPage } from '@/features/public/pages/not-found-page'
+import { RegisterPage } from '@/features/auth/pages/register-page'
+import { AppointmentsPage } from '@/features/appointments/pages/staff/appointments-page'
+import { CustomerReportsPage } from '@/features/reports/pages/staff/customer-reports-page'
+import { SalesInvoicesPage } from '@/features/sales-invoices/pages/staff/sales-invoices-page'
+import { StaffDashboardPage } from '@/features/dashboard/pages/staff/staff-dashboard-page'
 
 export function AppRouter() {
   return (
@@ -86,7 +91,21 @@ export function AppRouter() {
               element={<BookAppointmentPage />}
             />
             <Route path="part-requests" element={<PartRequestsPage />} />
+            <Route path="service-invoices" element={<CustomerServiceInvoicesPage />} />
+            <Route
+              path="service-invoices/payment/callback"
+              element={<ServiceInvoicePaymentCallbackPage />}
+            />
+            <Route path="payments" element={<CustomerPaymentsPage />} />
+            <Route
+              path="notifications"
+              element={<CustomerNotificationsPage />}
+            />
             <Route path="history" element={<CustomerHistoryPage />} />
+            <Route
+              path="history/services/:serviceRecordId"
+              element={<ServiceHistoryDetailPage />}
+            />
             <Route path="reviews" element={<ReviewsPage />} />
             <Route path="profile" element={<ProfilePage />} />
           </Route>

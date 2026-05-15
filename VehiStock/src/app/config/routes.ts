@@ -28,7 +28,15 @@ export const ROUTE_PATHS = {
     vehicleDetails: (vehicleId: number | string) => `/customer/vehicles/${vehicleId}`,
     bookAppointment: '/customer/book-appointment',
     partRequests: '/customer/part-requests',
+    serviceInvoices: '/customer/service-invoices',
+    serviceInvoiceCheckout: (serviceInvoiceId: number | string) =>
+      `/customer/service-invoices/${serviceInvoiceId}/checkout`,
+    serviceInvoicePaymentCallback: '/customer/service-invoices/payment/callback',
+    payments: '/customer/payments',
+    notifications: '/customer/notifications',
     history: '/customer/history',
+    serviceHistoryDetail: (serviceRecordId: number | string) =>
+      `/customer/history/services/${serviceRecordId}`,
     reviews: '/customer/reviews',
     profile: '/customer/profile',
   },
@@ -145,6 +153,48 @@ const pageMetaEntries: Array<{ path: string; meta: PageMeta }> = [
     meta: {
       title: 'Part Requests',
       subtitle: 'Request unavailable parts and monitor request status.',
+    },
+  },
+  {
+    path: ROUTE_PATHS.customer.serviceInvoices,
+    meta: {
+      title: 'Service Invoices',
+      subtitle: 'Detailed list of your service invoices with payment status.',
+    },
+  },
+  {
+    path: '/customer/service-invoices',
+    meta: {
+      title: 'Checkout',
+      subtitle: 'Pay your service invoice securely with Khalti.',
+    },
+  },
+  {
+    path: ROUTE_PATHS.customer.serviceInvoicePaymentCallback,
+    meta: {
+      title: 'Payment Status',
+      subtitle: 'Confirming the result of your Khalti payment.',
+    },
+  },
+  {
+    path: ROUTE_PATHS.customer.payments,
+    meta: {
+      title: 'Payments',
+      subtitle: 'Track payment status and outstanding balances.',
+    },
+  },
+  {
+    path: ROUTE_PATHS.customer.notifications,
+    meta: {
+      title: 'Notifications',
+      subtitle: 'See account alerts and service updates.',
+    },
+  },
+  {
+    path: '/customer/history/services',
+    meta: {
+      title: 'Service Details',
+      subtitle: 'Detailed breakdown of a completed service record.',
     },
   },
   {
