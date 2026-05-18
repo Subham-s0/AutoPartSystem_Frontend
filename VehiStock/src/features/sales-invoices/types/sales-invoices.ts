@@ -58,8 +58,11 @@ export interface SalesInvoice {
   salesInvoiceId: number
   invoiceNo: string
   customerId: number
+  customerName?: string
   vehicleId: number
+  vehicleNumber?: string
   staffMemberId: number
+  staffName?: string
   invoiceDate: string
   subtotal: number
   discountPercent: number

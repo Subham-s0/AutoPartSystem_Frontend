@@ -12,6 +12,7 @@ import {
   Star,
   User,
   UserCog,
+  Users,
   Warehouse,
   Wrench,
 } from 'lucide-react'
@@ -49,6 +50,11 @@ const adminNavigation: NavigationSection[] = [
         icon: UserCog,
       },
       {
+        label: 'Customers',
+        to: ROUTE_PATHS.admin.customers,
+        icon: Users,
+      },
+      {
         label: 'Reports',
         to: ROUTE_PATHS.admin.reports,
         icon: BarChart3,
@@ -81,6 +87,11 @@ const staffNavigation: NavigationSection[] = [
   {
     title: 'Work',
     items: [
+      {
+        label: 'Customers',
+        to: ROUTE_PATHS.staff.customers,
+        icon: Users,
+      },
       {
         label: 'Sales Invoices',
         to: ROUTE_PATHS.staff.salesInvoices,

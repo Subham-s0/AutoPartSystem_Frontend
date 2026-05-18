@@ -32,3 +32,36 @@ export function createSalesInvoice(input: CreateSalesInvoiceInput) {
     body: input,
   })
 }
+
+export function sendInvoiceEmail(invoiceId: number) {
+  return apiRequest<void>(`${API_ROUTES.staff.salesInvoices}/${invoiceId}/send-email`, {
+    method: 'POST',
+  })
+}
+
+export interface PaginatedSalesInvoices {
+  items: SalesInvoice[]
+  pageNumber: number
+  pageSize: number
+  totalRecords: number
+  totalPages: number
+}
+
+export function getSalesInvoices(search?: string, page: number = 1, pageSize: number = 10) {
+  const params = new URLSearchParams({
+    pageNumber: String(page),
+    pageSize: String(pageSize),
+  })
+  if (search?.trim()) {
+    params.append('search', search.trim())
+  }
+  return apiRequest<PaginatedSalesInvoices>(
+    `${API_ROUTES.staff.salesInvoices}?${params.toString()}`,
+  )
+}
+
+export function deleteSalesInvoice(invoiceId: number) {
+  return apiRequest<void>(`${API_ROUTES.staff.salesInvoices}/${invoiceId}`, {
+    method: 'DELETE',
+  })
+}

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout } from '@/app/layouts/admin-layout'
 import { CustomerLayout } from '@/app/layouts/customer-layout'
@@ -31,10 +32,13 @@ import { AdminLoginPage } from '@/features/auth/pages/admin-login-page'
 import { LoginPage } from '@/features/auth/pages/login-page'
 import { NotFoundPage } from '@/features/public/pages/not-found-page'
 import { RegisterPage } from '@/features/auth/pages/register-page'
+import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
+import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page'
 import { AppointmentsPage } from '@/features/appointments/pages/staff/appointments-page'
 import { CustomerReportsPage } from '@/features/reports/pages/staff/customer-reports-page'
 import { SalesInvoicesPage } from '@/features/sales-invoices/pages/staff/sales-invoices-page'
 import { StaffDashboardPage } from '@/features/dashboard/pages/staff/staff-dashboard-page'
+import { StaffCustomersPage } from '@/features/customers/pages/staff/staff-customers-page'
 
 export function AppRouter() {
   return (
@@ -50,6 +54,14 @@ export function AppRouter() {
           path={ROUTE_PATHS.register.slice(1)}
           element={<RegisterPage />}
         />
+        <Route
+          path="forgot-password"
+          element={<ForgotPasswordPage />}
+        />
+        <Route
+          path="reset-password"
+          element={<ResetPasswordPage />}
+        />
       </Route>
 
       <Route element={<ProtectedRoute />}>
@@ -61,6 +73,7 @@ export function AppRouter() {
             <Route path="staff" element={<StaffPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="customers" element={<StaffCustomersPage />} />
           </Route>
         </Route>
 
@@ -71,6 +84,7 @@ export function AppRouter() {
               path="customer-sales"
               element={<Navigate replace to={ROUTE_PATHS.staff.salesInvoices} />}
             />
+            <Route path="customers" element={<StaffCustomersPage />} />
             <Route path="appointments" element={<AppointmentsPage />} />
             <Route path="sales-invoices" element={<SalesInvoicesPage />} />
             <Route

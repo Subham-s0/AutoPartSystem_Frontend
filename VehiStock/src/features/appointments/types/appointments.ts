@@ -25,3 +25,19 @@ export interface BookAppointmentInput {
   serviceType: string
   problemDescription: string
 }
+
+export interface StaffAppointment {
+  appointmentId: number
+  customerId: number
+  customerName: string
+  customerEmail: string
+  vehicleId: number
+  vehicleNumber: string
+  preferredDate: string
+  serviceType: string
+  problemDescription: string
+  status: string
+  assignedStaffId: number | null
+  assignedStaffName: string | null
+  bookedAt: string
+}

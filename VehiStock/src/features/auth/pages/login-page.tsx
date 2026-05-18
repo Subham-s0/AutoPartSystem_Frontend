@@ -210,16 +210,26 @@ export function LoginPage() {
                 />
               </label>
 
-              <label className="block text-sm font-medium text-[var(--vs-text)]">
-                Password
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-[var(--vs-text)]">
+                    Password
+                  </label>
+                  <Link
+                    className="text-xs font-semibold text-[var(--vs-green-800)] transition hover:text-[var(--vs-green-900)] hover:underline"
+                    to="/forgot-password"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <input
-                  className="mt-2 w-full rounded-2xl border border-[var(--vs-border)] bg-[var(--vs-bg)] px-4 py-3 text-sm outline-none transition focus:border-[var(--vs-green-600)]"
+                  className="w-full rounded-2xl border border-[var(--vs-border)] bg-[var(--vs-bg)] px-4 py-3 text-sm outline-none transition focus:border-[var(--vs-green-600)]"
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Enter your password"
                   type="password"
                   value={password}
                 />
-              </label>
+              </div>
             </div>
 
             {error ? (
