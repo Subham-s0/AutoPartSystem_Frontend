@@ -26,6 +26,13 @@ export function createCustomerVehicle(input: VehicleInput) {
   })
 }
 
+export function createVehicleForCustomer(customerId: number, input: VehicleInput) {
+  return apiRequest<CustomerVehicle>(`${API_ROUTES.staff.vehicles}/${customerId}`, {
+    method: 'POST',
+    body: createVehicleRequestBody(input),
+  })
+}
+
 export function updateCustomerVehicle(vehicleId: number, input: VehicleInput) {
   return apiRequest<CustomerVehicle>(`${API_ROUTES.customer.vehicles}/${vehicleId}`, {
     method: 'PUT',

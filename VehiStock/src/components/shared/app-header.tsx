@@ -103,7 +103,7 @@ export function AppHeader({ actions }: PropsWithChildren<AppHeaderProps>) {
 
   return (
     <header className="topbar">
-      <div className="topbar-left">
+      <div className="topbar-left" id="topbar-actions-portal" style={{ display: 'flex', gap: '8px' }}>
         {actions}
       </div>
       <div className="topbar-right">

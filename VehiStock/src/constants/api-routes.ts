@@ -6,6 +6,8 @@ export const API_ROUTES = {
     customerRegister: '/api/auth/register/customer',
     staffRegister: '/api/auth/register/staff',
     googleLogin: '/api/auth/login/google',
+    forgotPassword: '/api/auth/forgot-password',
+    resetPassword: '/api/auth/reset-password',
   },
   notifications: {
     current: '/api/notifications',
@@ -42,11 +44,22 @@ export const API_ROUTES = {
   admin: {
     notifications: '/api/admin/notifications',
     staff: '/api/admin/staff',
+    vendors: '/api/admin/vendors',
+    inventory: '/api/admin/inventory',
+    reports: {
+      daily: '/api/admin/reports/daily',
+      monthly: '/api/admin/reports/monthly',
+      yearly: '/api/admin/reports/yearly',
+    },
   },
   staff: {
+    dashboard: '/api/staff/dashboard',
+    appointments: '/api/staff/appointments',
+    serviceRecords: '/api/staff/service-records',
     salesInvoices: '/api/staff/sales-invoices',
     salesInvoiceLookups: '/api/staff/sales-invoices/lookups',
     vehicles: '/api/staff/vehicles',
+    customersSearch: '/api/staff/customers/search',
     customerReports: {
       regulars: '/api/staff/reports/customers/regulars',
       highSpenders: '/api/staff/reports/customers/high-spenders',

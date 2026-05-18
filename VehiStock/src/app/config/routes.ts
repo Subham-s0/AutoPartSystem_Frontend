@@ -13,10 +13,12 @@ export const ROUTE_PATHS = {
     staff: '/admin/staff',
     reports: '/admin/reports',
     notifications: '/admin/notifications',
+    customers: '/admin/customers',
   },
   staff: {
     dashboard: '/staff',
     customerSales: '/staff/customer-sales',
+    customers: '/staff/customers',
     appointments: '/staff/appointments',
     salesInvoices: '/staff/sales-invoices',
     customerReports: '/staff/customer-reports',
@@ -93,10 +95,24 @@ const pageMetaEntries: Array<{ path: string; meta: PageMeta }> = [
     },
   },
   {
+    path: ROUTE_PATHS.admin.customers,
+    meta: {
+      title: 'Customer Directory',
+      subtitle: 'View all registered customers and their comprehensive history.',
+    },
+  },
+  {
     path: ROUTE_PATHS.staff.dashboard,
     meta: {
       title: 'Staff Dashboard',
       subtitle: 'Handle sales, appointments, and customer follow-up.',
+    },
+  },
+  {
+    path: ROUTE_PATHS.staff.customers,
+    meta: {
+      title: 'Customers Directory',
+      subtitle: 'Register, search, and view detailed customer histories.',
     },
   },
   {

@@ -15,18 +15,7 @@ export function AdminLayout() {
       />
       <main className="main">
         <AppHeader
-          actions={
-            <>
-              <button className="tb-btn" type="button">
-                <Download size={13} />
-                Export
-              </button>
-              <button className="tb-btn primary" type="button">
-                <Plus size={13} />
-                Add Part
-              </button>
-            </>
-          }
+          actions={null}
         />
         <div className="content">
           <Outlet />

@@ -59,3 +59,21 @@ export function registerStaff(input: RegisterStaffInput) {
     body: input,
   })
 }
+
+export function forgotPassword(email: string) {
+  return apiRequest<void>(API_ROUTES.auth.forgotPassword, {
+    method: 'POST',
+    body: { email },
+    skipAuth: true,
+    skipAuthRefresh: true,
+  })
+}
+
+export function resetPassword(input: { email: string; token: string; newPassword: string }) {
+  return apiRequest<void>(API_ROUTES.auth.resetPassword, {
+    method: 'POST',
+    body: input,
+    skipAuth: true,
+    skipAuthRefresh: true,
+  })
+}

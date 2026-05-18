@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Plus, ReceiptText, Trash2 } from 'lucide-react'
+import { Plus, ReceiptText, Trash2, Eye, Mail, Search, FileText, X, AlertCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -36,6 +36,9 @@ import {
   createSalesInvoice,
   getSalesInvoiceLookups,
   getStaffCustomerVehicles,
+  sendInvoiceEmail,
+  getSalesInvoices,
+  deleteSalesInvoice,
 } from '@/features/sales-invoices/api/sales-invoices-api'
 import type {
   SalesInvoice,
@@ -95,12 +98,96 @@ export function SalesInvoicesPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [createdInvoice, setCreatedInvoice] = React.useState<SalesInvoice | null>(null)
 
+  // Listing states
+  const [activeTab, setActiveTab] = React.useState<'list' | 'create'>('list')
+  const [invoices, setInvoices] = React.useState<SalesInvoice[]>([])
+  const [isLoadingInvoices, setIsLoadingInvoices] = React.useState(true)
+  const [invoicesError, setInvoicesError] = React.useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = React.useState('')
+  const [selectedInvoice, setSelectedInvoice] = React.useState<SalesInvoice | null>(null)
+
+  // Server-side pagination states
+  const [page, setPage] = React.useState(1)
+  const [totalPages, setTotalPages] = React.useState(1)
+  const [totalRecords, setTotalRecords] = React.useState(0)
+  const pageSize = 10
+
+  const loadInvoices = React.useCallback(async (q: string, targetPage: number) => {
+    try {
+      setIsLoadingInvoices(true)
+      setInvoicesError(null)
+      const res = await getSalesInvoices(q, targetPage, pageSize)
+      setInvoices(res.items)
+      setTotalPages(res.totalPages)
+      setTotalRecords(res.totalRecords)
+    } catch (err) {
+      setInvoicesError(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : 'Unable to load sales invoices.',
+      )
+    } finally {
+      setIsLoadingInvoices(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (activeTab === 'list') {
+      const timeoutId = setTimeout(() => {
+        void loadInvoices(searchQuery, page)
+      }, 300)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [activeTab, searchQuery, page, loadInvoices])
+
+  React.useEffect(() => {
+    setPage(1)
+  }, [searchQuery])
+
+  async function handleDeleteInvoice(invoiceId: number) {
+    if (!window.confirm('Are you sure you want to permanently delete this sales invoice? This will restore part stock levels.')) {
+      return
+    }
+
+    try {
+      await deleteSalesInvoice(invoiceId)
+      setInvoices((prev) => prev.filter((inv) => inv.salesInvoiceId !== invoiceId))
+      if (selectedInvoice?.salesInvoiceId === invoiceId) {
+        setSelectedInvoice(null)
+      }
+    } catch (err) {
+      alert(err instanceof ApiError || err instanceof Error ? err.message : 'Failed to delete invoice.')
+    }
+  }
+
+  const filteredInvoices = invoices
+  const paginatedInvoices = invoices
+
   const [staffVehicles, setStaffVehicles] = React.useState<CustomerVehicle[]>([])
   const [vehicleComboSearch, setVehicleComboSearch] = React.useState('')
   const [debouncedVehicleSearch, setDebouncedVehicleSearch] = React.useState('')
   const [isStaffVehiclesLoading, setIsStaffVehiclesLoading] = React.useState(false)
   const [selectedStaffVehicle, setSelectedStaffVehicle] =
     React.useState<CustomerVehicle | null>(null)
+
+  const [emailStatus, setEmailStatus] = React.useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [emailError, setEmailError] = React.useState<string | null>(null)
+
+  async function handleSendEmail(invoiceId: number) {
+    try {
+      setEmailStatus('sending')
+      setEmailError(null)
+      await sendInvoiceEmail(invoiceId)
+      setEmailStatus('success')
+    } catch (error) {
+      setEmailStatus('error')
+      setEmailError(
+        error instanceof ApiError || error instanceof Error
+          ? error.message
+          : 'Unable to send email notification.',
+      )
+    }
+  }
 
   React.useEffect(() => {
     const timer = setTimeout(() => setDebouncedVehicleSearch(vehicleComboSearch), 300)
@@ -389,44 +476,259 @@ export function SalesInvoicesPage() {
 
   return (
     <PageSection
-      description="Create sales invoices with customer-linked vehicles and current in-stock parts."
+      description="Create, review, and delete sales invoices with real-time inventory synchronization."
       title="Sales Invoices"
     >
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardDescription>Customers available</CardDescription>
-              <CardTitle>{lookups?.customers.length ?? 0}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription>Parts available</CardDescription>
-              <CardTitle>{lookups?.parts.length ?? 0}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription>Estimated total</CardDescription>
-              <CardTitle>{formatCurrency(totalAmount)}</CardTitle>
-            </CardHeader>
-          </Card>
+        {/* Navigation Tabs */}
+        <div className="flex border-b border-gray-200 gap-6 mb-6">
+          <button
+            onClick={() => setActiveTab('list')}
+            className={`pb-3 font-semibold text-sm transition-colors relative ${
+              activeTab === 'list'
+                ? 'text-[var(--vs-green-800)] border-b-2 border-[var(--vs-green-800)]'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            Invoice History
+          </button>
+          <button
+            onClick={() => setActiveTab('create')}
+            className={`pb-3 font-semibold text-sm transition-colors relative ${
+              activeTab === 'create'
+                ? 'text-[var(--vs-green-800)] border-b-2 border-[var(--vs-green-800)]'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            Create New Invoice
+          </button>
         </div>
 
-        {lookupError ? (
-          <Alert variant="destructive">
-            <AlertTitle>Lookup loading failed</AlertTitle>
-            <AlertDescription>{lookupError}</AlertDescription>
-          </Alert>
-        ) : null}
+        {activeTab === 'list' ? (
+          <div className="space-y-6">
+            {/* Search Filter Card */}
+            <Card className="rounded-2xl border-gray-100 shadow-sm">
+              <CardContent className="pt-6">
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search invoices by invoice number, customer name, or vehicle plate..."
+                    className="pl-10 h-11 border-gray-200 rounded-xl"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-        {submitError ? (
-          <Alert variant="destructive">
-            <AlertTitle>Invoice creation failed</AlertTitle>
-            <AlertDescription>{submitError}</AlertDescription>
-          </Alert>
-        ) : null}
+            {invoicesError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Error loading invoices</AlertTitle>
+                <AlertDescription>{invoicesError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <Card className="rounded-2xl border-gray-100 shadow-sm overflow-hidden">
+              <CardContent className="p-0">
+                {isLoadingInvoices ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-3">
+                    <Loader2 className="size-8 text-[var(--vs-green-800)] animate-spin" />
+                    <span className="text-sm text-gray-500">Fetching invoice registry...</span>
+                  </div>
+                ) : filteredInvoices.length > 0 ? (
+                  <>
+                    <Table>
+                    <TableHeader className="bg-gray-50/50">
+                      <TableRow>
+                        <TableHead className="font-semibold text-xs text-gray-700">Invoice No</TableHead>
+                        <TableHead className="font-semibold text-xs text-gray-700">Customer</TableHead>
+                        <TableHead className="font-semibold text-xs text-gray-700">Vehicle</TableHead>
+                        <TableHead className="font-semibold text-xs text-gray-700">Date</TableHead>
+                        <TableHead className="font-semibold text-xs text-gray-700">Total Amount</TableHead>
+                        <TableHead className="font-semibold text-xs text-gray-700">Status</TableHead>
+                        <TableHead className="font-semibold text-xs text-gray-700 text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedInvoices.map((inv) => (
+                        <TableRow key={inv.salesInvoiceId} className="hover:bg-gray-50/20 transition-colors">
+                          <TableCell className="font-mono text-xs font-semibold text-gray-700">
+                            {inv.invoiceNo}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-800 text-xs">{inv.customerName || 'Unknown Customer'}</span>
+                              <span className="text-gray-500 text-[10px]">{inv.customerId}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-mono text-[11px] font-semibold bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded">
+                              {inv.vehicleNumber || 'N/A'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-gray-600 text-xs">
+                            {formatDateOnly(inv.invoiceDate)}
+                          </TableCell>
+                          <TableCell className="font-bold text-gray-900 text-xs">
+                            {formatCurrency(inv.totalAmount)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`font-semibold hover:bg-opacity-105 ${
+                                inv.paymentStatus === 'Paid'
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-105'
+                                  : inv.paymentStatus === 'Partial'
+                                    ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-105'
+                                    : 'bg-rose-100 text-rose-800 border-rose-200 hover:bg-rose-105'
+                              }`}
+                            >
+                              {inv.paymentStatus}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="size-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg"
+                                title="View details"
+                                onClick={() => setSelectedInvoice(inv)}
+                              >
+                                <Eye className="size-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="size-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg"
+                                title="Resend email invoice"
+                                onClick={() => void handleSendEmail(inv.salesInvoiceId)}
+                                disabled={emailStatus === 'sending'}
+                              >
+                                <Mail className="size-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="size-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg"
+                                title="Delete invoice"
+                                onClick={() => void handleDeleteInvoice(inv.salesInvoiceId)}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  
+                  {filteredInvoices.length > 0 && (
+                    <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/20">
+                      <p className="text-xs font-semibold text-gray-500">
+                        Showing {totalRecords === 0 ? 0 : (page - 1) * 10 + 1} to {Math.min(totalRecords, page * 10)} of {totalRecords} invoices
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          disabled={page <= 1}
+                          onClick={() => setPage(p => Math.max(1, p - 1))}
+                          size="sm" variant="outline" className="h-8 px-3"
+                        >
+                          Previous
+                        </Button>
+                        
+                        {Array.from({ length: totalPages || 1 }).map((_, index) => {
+                          const p = index + 1
+                          return (
+                            <Button
+                              type="button"
+                              key={p}
+                              onClick={() => setPage(p)}
+                              variant={page === p ? 'default' : 'outline'}
+                              size="sm"
+                              className={`h-8 w-8 p-0 font-semibold ${
+                                page === p 
+                                  ? 'bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white border-emerald-600 shadow-sm' 
+                                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-gray-200'
+                              }`}
+                            >
+                              {p}
+                            </Button>
+                          )
+                        })}
+
+                        <Button
+                          type="button"
+                          disabled={page >= totalPages}
+                          onClick={() => setPage(p => p + 1)}
+                          size="sm" variant="outline" className="h-8 px-3"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 gap-3">
+                    <FileText className="size-8 text-gray-300" />
+                    <span className="text-sm text-gray-500">No invoices registered.</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Email send status for the list page actions */}
+            {emailStatus === 'success' && (
+              <Alert className="bg-emerald-50 border-emerald-200 text-emerald-950 rounded-xl">
+                <AlertTitle className="font-semibold">Email Dispatch Successful</AlertTitle>
+                <AlertDescription>The HTML invoice has been successfully sent via SMTP.</AlertDescription>
+              </Alert>
+            )}
+            {emailStatus === 'error' && (
+              <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-950 rounded-xl">
+                <AlertTitle className="font-semibold">Email Delivery Failed</AlertTitle>
+                <AlertDescription>{emailError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader>
+                  <CardDescription>Customers available</CardDescription>
+                  <CardTitle>{lookups?.customers.length ?? 0}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardDescription>Parts available</CardDescription>
+                  <CardTitle>{lookups?.parts.length ?? 0}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardDescription>Estimated total</CardDescription>
+                  <CardTitle>{formatCurrency(totalAmount)}</CardTitle>
+                </CardHeader>
+              </Card>
+            </div>
+
+            {lookupError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Lookup loading failed</AlertTitle>
+                <AlertDescription>{lookupError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {submitError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Invoice creation failed</AlertTitle>
+                <AlertDescription>{submitError}</AlertDescription>
+              </Alert>
+            ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)]">
           <Card>
@@ -754,12 +1056,164 @@ export function SalesInvoicesPage() {
                       <p className="font-medium">{formatCurrency(createdInvoice.balanceDue)}</p>
                     </div>
                   </div>
+
+                  {emailStatus === 'success' && (
+                    <Alert className="bg-emerald-50 border-emerald-200 text-emerald-950 mt-4 rounded-xl">
+                      <AlertTitle className="font-semibold">Email Dispatch Successful</AlertTitle>
+                      <AlertDescription>The HTML invoice has been successfully sent to the customer's registered email address via SMTP.</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {emailStatus === 'error' && (
+                    <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-950 mt-4 rounded-xl">
+                      <AlertTitle className="font-semibold">Email Delivery Failed</AlertTitle>
+                      <AlertDescription>{emailError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Button
+                    onClick={() => void handleSendEmail(createdInvoice.salesInvoiceId)}
+                    disabled={emailStatus === 'sending'}
+                    className="w-full mt-4 bg-[var(--vs-green-800)] hover:bg-[var(--vs-green-900)] text-white rounded-xl py-2.5 font-semibold transition"
+                  >
+                    {emailStatus === 'sending' ? 'Sending invoice email...' : 'Send Invoice via Email (SMTP)'}
+                  </Button>
                 </CardContent>
               </Card>
             ) : null}
           </div>
         </div>
       </div>
-    </PageSection>
+    )}
+
+    {/* Sales Invoice Details Modal */}
+    {selectedInvoice ? (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+        <div className="relative bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col border border-gray-100">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between border-b px-6 py-4.5 bg-gray-50/50">
+            <div>
+              <h3 className="font-bold text-lg text-gray-900">
+                Invoice Details - {selectedInvoice.invoiceNo}
+              </h3>
+              <p className="text-xs text-gray-500">
+                Created on {formatDateOnly(selectedInvoice.invoiceDate)}
+              </p>
+            </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="rounded-full size-9 hover:bg-gray-200"
+              onClick={() => setSelectedInvoice(null)}
+            >
+              <X className="size-5 text-gray-500" />
+            </Button>
+          </div>
+
+          {/* Modal Body */}
+          <div className="p-6 space-y-6">
+            {/* Billing details grid */}
+            <div className="grid gap-6 md:grid-cols-2 bg-gray-50/30 border border-gray-100 rounded-2xl p-5">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Customer Details</span>
+                <p className="font-bold text-sm text-gray-800">{selectedInvoice.customerName || 'N/A'}</p>
+                <p className="text-xs text-gray-500">ID: {selectedInvoice.customerId}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Vehicle Information</span>
+                <p className="font-bold text-sm text-gray-800">License Plate: {selectedInvoice.vehicleNumber || 'N/A'}</p>
+                <p className="text-xs text-gray-500">Vehicle ID: {selectedInvoice.vehicleId}</p>
+              </div>
+            </div>
+
+            {/* Items Table */}
+            <div className="rounded-2xl border border-gray-100 overflow-hidden">
+              <Table>
+                <TableHeader className="bg-gray-50/50">
+                  <TableRow>
+                    <TableHead className="font-semibold text-xs text-gray-700">Part Name</TableHead>
+                    <TableHead className="font-semibold text-xs text-gray-700">Brand</TableHead>
+                    <TableHead className="font-semibold text-xs text-gray-700 text-right">Qty</TableHead>
+                    <TableHead className="font-semibold text-xs text-gray-700 text-right">Unit Price</TableHead>
+                    <TableHead className="font-semibold text-xs text-gray-700 text-right">Discount</TableHead>
+                    <TableHead className="font-semibold text-xs text-gray-700 text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedInvoice.items && selectedInvoice.items.length > 0 ? (
+                    selectedInvoice.items.map((item, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-medium text-gray-800 text-xs">{item.partName}</TableCell>
+                        <TableCell className="text-gray-600 text-xs">{item.brand}</TableCell>
+                        <TableCell className="text-right text-xs">{item.quantity}</TableCell>
+                        <TableCell className="text-right text-xs font-mono">{formatCurrency(item.unitPrice)}</TableCell>
+                        <TableCell className="text-right text-xs font-mono text-red-600">- {formatCurrency(item.discountAmount)}</TableCell>
+                        <TableCell className="text-right text-xs font-mono font-bold text-gray-900">{formatCurrency(item.lineTotal)}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">
+                        No items found in this invoice.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Financial Summary */}
+            <div className="flex justify-end">
+              <div className="w-full max-w-xs space-y-2 rounded-2xl border bg-gray-50/30 p-4.5 border-gray-100">
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Subtotal</span>
+                  <span className="font-mono">{formatCurrency(selectedInvoice.subtotal)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Invoice Discount ({selectedInvoice.discountPercent}%)</span>
+                  <span className="font-mono">- {formatCurrency(selectedInvoice.discountAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Tax Amount</span>
+                  <span className="font-mono">{formatCurrency(selectedInvoice.taxAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between border-t pt-2 text-sm font-bold text-gray-800">
+                  <span>Total Amount</span>
+                  <span className="font-mono text-[15px] text-[var(--vs-green-800)]">{formatCurrency(selectedInvoice.totalAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-600">
+                  <span>Amount Paid</span>
+                  <span className="font-mono">{formatCurrency(selectedInvoice.amountPaid)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs font-semibold text-rose-600">
+                  <span>Balance Due</span>
+                  <span className="font-mono">{formatCurrency(selectedInvoice.balanceDue)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="flex items-center justify-between border-t px-6 py-4.5 bg-gray-50/50">
+            <Button
+              onClick={() => void handleSendEmail(selectedInvoice.salesInvoiceId)}
+              disabled={emailStatus === 'sending'}
+              className="bg-[var(--vs-green-800)] hover:bg-[var(--vs-green-900)] text-white rounded-xl px-4 py-2 text-xs font-semibold"
+            >
+              {emailStatus === 'sending' ? 'Sending invoice...' : 'Send Invoice Email'}
+            </Button>
+            <Button
+              variant="outline"
+              className="rounded-xl px-4 py-2 text-xs font-semibold border-gray-200"
+              onClick={() => setSelectedInvoice(null)}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </div>
+    ) : null}
+  </div>
+</PageSection>
   )
 }
