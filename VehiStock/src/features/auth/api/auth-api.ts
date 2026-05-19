@@ -1,6 +1,6 @@
 import { API_ROUTES } from '@/constants/api-routes'
 import { apiRequest } from '@/services/api-client'
-import type { RegisterStaffInput } from '@/features/staff-management/types/staff-management'
+import type { RegisterStaffInput, RegisterUserResult } from '@/features/staff-management/types/staff-management'
 import type {
   GoogleLoginInput,
   LoginCredentials,
@@ -45,7 +45,7 @@ export function loginWithGoogle(input: GoogleLoginInput) {
 }
 
 export function registerCustomer(input: RegisterCustomerInput) {
-  return apiRequest(API_ROUTES.auth.customerRegister, {
+  return apiRequest<RegisterUserResult>(API_ROUTES.auth.customerRegister, {
     method: 'POST',
     body: input,
     skipAuth: true,

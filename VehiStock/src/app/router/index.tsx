@@ -1,4 +1,3 @@
-import React from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout } from '@/app/layouts/admin-layout'
 import { CustomerLayout } from '@/app/layouts/customer-layout'
@@ -39,6 +38,7 @@ import { CustomerReportsPage } from '@/features/reports/pages/staff/customer-rep
 import { SalesInvoicesPage } from '@/features/sales-invoices/pages/staff/sales-invoices-page'
 import { StaffDashboardPage } from '@/features/dashboard/pages/staff/staff-dashboard-page'
 import { StaffCustomersPage } from '@/features/customers/pages/staff/staff-customers-page'
+import { AdminCustomersPage } from '@/features/customers/pages/admin/admin-customers-page'
 
 export function AppRouter() {
   return (
@@ -73,7 +73,7 @@ export function AppRouter() {
             <Route path="staff" element={<StaffPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="customers" element={<StaffCustomersPage />} />
+            <Route path="customers" element={<AdminCustomersPage />} />
           </Route>
         </Route>
 

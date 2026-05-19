@@ -1,17 +1,23 @@
 import { API_ROUTES } from '@/constants/api-routes'
 import { apiRequest } from '@/services/api-client'
 import type { PaginatedResponse } from '@/types/api'
-import type { StaffSummary, UpdateStaffRoleInput } from '../types/staff-management'
+import { appendOptionalQueryValue } from '@/utils/api-helpers'
+import type { StaffDetail, StaffSummary, UpdateStaffRoleInput } from '../types/staff-management'
 
-export function getStaff(pageNumber = 1, pageSize = 10) {
+export function getStaff(pageNumber = 1, pageSize = 10, search?: string) {
   const query = new URLSearchParams({
     pageNumber: String(pageNumber),
     pageSize: String(pageSize),
   })
+  appendOptionalQueryValue(query, 'search', search)
 
   return apiRequest<PaginatedResponse<StaffSummary>>(
     `${API_ROUTES.admin.staff}?${query.toString()}`,
   )
+}
+
+export function getStaffDetail(userId: string) {
+  return apiRequest<StaffDetail>(API_ROUTES.admin.staffDetail(userId))
 }
 
 export function updateStaffRole(userId: string, input: UpdateStaffRoleInput) {

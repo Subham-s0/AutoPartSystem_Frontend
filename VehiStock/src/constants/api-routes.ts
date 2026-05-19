@@ -44,6 +44,9 @@ export const API_ROUTES = {
   admin: {
     notifications: '/api/admin/notifications',
     staff: '/api/admin/staff',
+    staffDetail: (userId: string) => `/api/admin/staff/${userId}`,
+    customers: '/api/admin/customers',
+    customerDetail: (customerId: number | string) => `/api/admin/customers/${customerId}`,
     vendors: '/api/admin/vendors',
     inventory: '/api/admin/inventory',
     reports: {
@@ -57,10 +60,14 @@ export const API_ROUTES = {
     appointments: '/api/staff/appointments',
     serviceRecords: '/api/staff/service-records',
     salesInvoices: '/api/staff/sales-invoices',
+    salesInvoiceDetail: (invoiceId: number | string) => `/api/staff/sales-invoices/${invoiceId}`,
     salesInvoiceLookups: '/api/staff/sales-invoices/lookups',
     vehicles: '/api/staff/vehicles',
     customersSearch: '/api/staff/customers/search',
+    customerDetail: (customerId: number | string) => `/api/staff/customers/${customerId}`,
+    customerHistory: (customerId: number | string) => `/api/staff/customers/${customerId}/history`,
     customerReports: {
+      summary: '/api/staff/reports/customers/summary',
       regulars: '/api/staff/reports/customers/regulars',
       highSpenders: '/api/staff/reports/customers/high-spenders',
       pendingCredits: '/api/staff/reports/customers/pending-credits',
