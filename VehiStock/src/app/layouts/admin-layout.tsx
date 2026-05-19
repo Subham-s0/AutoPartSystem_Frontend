@@ -1,4 +1,3 @@
-import { Download, Plus } from 'lucide-react'
 import { Outlet } from 'react-router-dom'
 import { getNavigationForRole } from '@/app/config/navigation'
 import { AppHeader } from '@/components/shared/app-header'

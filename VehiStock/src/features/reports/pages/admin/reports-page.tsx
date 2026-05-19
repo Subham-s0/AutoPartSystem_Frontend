@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,10 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+
+function formatChartCurrency(value: unknown) {
+  return typeof value === 'number' ? formatCurrency(value) : formatCurrency(Number(value) || 0)
+}
 
 export function ReportsPage() {
   const navigate = useNavigate()
@@ -453,7 +457,7 @@ export function ReportsPage() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0fdf4" />
                         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#064e3b'}} />
                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#064e3b'}} tickFormatter={(val) => `NPR ${val/1000}k`} />
-                        <Tooltip cursor={{fill: '#f0fdf4'}} formatter={(value: number) => formatCurrency(value)} />
+                        <Tooltip cursor={{fill: '#f0fdf4'}} formatter={formatChartCurrency} />
                         <Legend />
                         <Bar dataKey="revenue" name="Revenue" fill="#10b981" radius={[4, 4, 0, 0]} minPointSize={5} />
                         <Bar dataKey="cost" name="Cost" fill="#f59e0b" radius={[4, 4, 0, 0]} minPointSize={5} />
@@ -478,11 +482,11 @@ export function ReportsPage() {
                             paddingAngle={5}
                             dataKey="value"
                           >
-                            {pieData.map((entry, index) => (
+                            {pieData.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                          <Tooltip formatter={formatChartCurrency} />
                           <Legend verticalAlign="bottom" height={36}/>
                         </PieChart>
                       </ResponsiveContainer>

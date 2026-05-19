@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Search, Wrench, Package, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 
 const MOCK_PARTS = [
   { id: 1, name: 'Brake Pads (Front)', code: 'BP-F-001', category: 'Brakes', stock: 45, price: 2500, minStock: 10 },
