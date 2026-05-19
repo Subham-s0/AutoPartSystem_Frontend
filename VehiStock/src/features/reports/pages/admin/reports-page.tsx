@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
@@ -28,7 +28,9 @@ export function ReportsPage() {
   const breakdownPageSize = 5
 
   useEffect(() => {
-    setBreakdownPage(1)
+    queueMicrotask(() => {
+      setBreakdownPage(1)
+    })
   }, [reportData])
 
   // Filters
@@ -37,7 +39,7 @@ export function ReportsPage() {
   const [monthlyYear, setMonthlyYear] = useState(() => new Date().getFullYear().toString())
   const [yearlyYear, setYearlyYear] = useState(() => new Date().getFullYear().toString())
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     setLoading(true)
     try {
       let data
@@ -55,11 +57,13 @@ export function ReportsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeTab, dailyDate, monthlyMonth, monthlyYear, yearlyYear])
 
   useEffect(() => {
-    fetchReport()
-  }, [activeTab, dailyDate, monthlyMonth, monthlyYear, yearlyYear])
+    queueMicrotask(() => {
+      void fetchReport()
+    })
+  }, [fetchReport])
 
   const handleExportCSV = () => {
     if (!reportData || !reportData.breakdown) return
@@ -190,7 +194,7 @@ export function ReportsPage() {
     }
 
     // 4. Footer
-    const pageCount = (doc as any).internal.getNumberOfPages()
+    const pageCount = doc.getNumberOfPages()
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i)
       doc.setFontSize(8)

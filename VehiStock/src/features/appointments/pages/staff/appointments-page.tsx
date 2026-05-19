@@ -80,8 +80,8 @@ function CompleteServiceJobForm({
         notes: formData.notes
       })
       onSuccess()
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create service job')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create service job')
     } finally {
       setIsLoading(false)
     }

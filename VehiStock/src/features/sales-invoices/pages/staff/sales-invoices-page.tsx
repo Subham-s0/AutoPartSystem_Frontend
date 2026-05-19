@@ -242,7 +242,9 @@ export function SalesInvoicesPage() {
   }, [activeTab, searchQuery, page, loadInvoices])
 
   React.useEffect(() => {
-    setPage(1)
+    queueMicrotask(() => {
+      setPage(1)
+    })
   }, [searchQuery])
 
   async function handleDeleteInvoice(invoiceId: number) {
@@ -266,7 +268,7 @@ export function SalesInvoicesPage() {
       setIsLoadingInvoiceDetail(true)
       const detail = await getSalesInvoiceById(invoice.salesInvoiceId)
       setSelectedInvoice(detail)
-    } catch (error) {
+    } catch {
       setSelectedInvoice(invoice)
     } finally {
       setIsLoadingInvoiceDetail(false)
@@ -309,7 +311,9 @@ export function SalesInvoicesPage() {
 
   React.useEffect(() => {
     if (!form.customerId) {
-      setStaffVehicles([])
+      queueMicrotask(() => {
+        setStaffVehicles([])
+      })
       return
     }
 
@@ -344,15 +348,27 @@ export function SalesInvoicesPage() {
   }, [form.customerId, debouncedVehicleSearch])
 
   React.useEffect(() => {
-    const id = Number(form.vehicleId)
-    if (!id) {
-      setSelectedStaffVehicle(null)
-      return
-    }
+    let isActive = true
 
-    const found = staffVehicles.find((v) => v.vehicleId === id)
-    if (found) {
-      setSelectedStaffVehicle(found)
+    queueMicrotask(() => {
+      if (!isActive) {
+        return
+      }
+
+      const id = Number(form.vehicleId)
+      if (!id) {
+        setSelectedStaffVehicle(null)
+        return
+      }
+
+      const found = staffVehicles.find((v) => v.vehicleId === id)
+      if (found) {
+        setSelectedStaffVehicle(found)
+      }
+    })
+
+    return () => {
+      isActive = false
     }
   }, [staffVehicles, form.vehicleId])
 

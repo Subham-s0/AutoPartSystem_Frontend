@@ -42,10 +42,10 @@ import {
 } from '@/features/service-invoices/api/customer-service-invoices-api'
 import { initiateServiceInvoicePayment } from '@/features/payments/api/payments-api'
 import {
-  canPayKhaltiInvoice,
   KhaltiCheckoutPanel,
 } from '@/features/payments/components/khalti-checkout-panel'
 import { redirectToKhaltiCheckout } from '@/features/payments/lib/khalti-checkout'
+import { canPayKhaltiInvoice } from '@/features/payments/lib/khalti-checkout-utils'
 import type { ServiceInvoiceListItem } from '@/features/service-invoices/types/customer-service-invoices'
 import { usePagination } from '@/hooks/use-pagination'
 import { formatDateOnly } from '@/utils/date'

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { Search, Wrench, Package, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -14,19 +14,18 @@ const MOCK_PARTS = [
 
 export function StaffPartsPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [parts, setParts] = useState(MOCK_PARTS)
 
-  useEffect(() => {
+  const parts = useMemo(() => {
     if (!searchTerm) {
-      setParts(MOCK_PARTS)
-    } else {
-      const lower = searchTerm.toLowerCase()
-      setParts(MOCK_PARTS.filter(p => 
+      return MOCK_PARTS
+    }
+
+    const lower = searchTerm.toLowerCase()
+    return MOCK_PARTS.filter(p =>
         p.name.toLowerCase().includes(lower) || 
         p.code.toLowerCase().includes(lower) ||
         p.category.toLowerCase().includes(lower)
-      ))
-    }
+      )
   }, [searchTerm])
 
   return (

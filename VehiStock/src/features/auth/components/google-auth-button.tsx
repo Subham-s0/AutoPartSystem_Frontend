@@ -77,9 +77,10 @@ export function GoogleAuthButton({
 }: GoogleAuthButtonProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null)
 
-  // Keep global callbacks fresh for the singleton GSI instance
-  currentCredentialCallback = onCredential
-  currentErrorCallback = onError ?? null
+  React.useEffect(() => {
+    currentCredentialCallback = onCredential
+    currentErrorCallback = onError ?? null
+  }, [onCredential, onError])
 
   React.useEffect(() => {
     if (!APP_CONFIG.googleClientId) {

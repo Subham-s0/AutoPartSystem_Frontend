@@ -83,11 +83,22 @@ export function VehicleDetailsPage() {
 
   React.useEffect(() => {
     if (isNewVehicle) {
-      setVehicle(null)
-      setForm(emptyForm)
-      setIsEditing(true)
-      setIsLoading(false)
-      return
+      let isActive = true
+
+      queueMicrotask(() => {
+        if (!isActive) {
+          return
+        }
+
+        setVehicle(null)
+        setForm(emptyForm)
+        setIsEditing(true)
+        setIsLoading(false)
+      })
+
+      return () => {
+        isActive = false
+      }
     }
 
     let isMounted = true
