@@ -1,0 +1,68 @@
+import { CalendarDays, ClipboardList, ShoppingCart, User, UserSearch, Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ROUTE_PATHS } from '@/app/config/routes'
+import { PageSection } from '@/components/shared/page-section'
+
+const staffModules = [
+  {
+    title: 'Search customers',
+    description: 'Find customers by name, phone, vehicle number, or ID.',
+    icon: UserSearch,
+    href: ROUTE_PATHS.staff.searchCustomers,
+  },
+  {
+    title: 'Customer details',
+    description: 'View profile, purchase history, and registered vehicles.',
+    icon: User,
+    href: ROUTE_PATHS.staff.customerDetails,
+  },
+  {
+    title: 'Sell parts',
+    description: 'Record a part sale for the selected customer and vehicle.',
+    icon: ShoppingCart,
+    href: ROUTE_PATHS.staff.sellParts,
+  },
+  {
+    title: 'Appointments',
+    description: 'Workshop scheduling and service queue handling.',
+    icon: CalendarDays,
+    href: ROUTE_PATHS.staff.appointments,
+  },
+  {
+    title: 'Sales invoices',
+    description: 'Full invoice creation and payment workflow.',
+    icon: ClipboardList,
+    href: ROUTE_PATHS.staff.salesInvoices,
+  },
+  {
+    title: 'Customer reports',
+    description: 'Regular buyers, high spenders, and pending credits.',
+    icon: Users,
+    href: ROUTE_PATHS.staff.customerReports,
+  },
+]
+
+export function StaffDashboardPage() {
+  return (
+    <PageSection
+      description="The staff area keeps its route structure without showing fake counters or sample daily activity."
+      title="Staff Overview"
+    >
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {staffModules.map((module) => (
+          <Link
+            key={module.title}
+            className="info-card transition hover:-translate-y-0.5 hover:border-[var(--vs-green-600)]"
+            to={module.href}
+          >
+            <div className="info-card-icon">
+              <module.icon />
+            </div>
+            <div className="info-card-title">{module.title}</div>
+            <div className="info-card-desc">{module.description}</div>
+          </Link>
+        ))}
+      </div>
+    </PageSection>
+  )
+}
