@@ -58,18 +58,33 @@ export function getStaffAppointments(pageNumber: number, pageSize: number, statu
   )
 }
 
-export function updateAppointmentStatus(appointmentId: number, status: string) {
-  return apiRequest<void>(`${API_ROUTES.staff.appointments}/${appointmentId}/status`, {
-    method: 'PUT',
-    body: { status },
-  })
+export function acceptStaffAppointment(appointmentId: number) {
+  return apiRequest<StaffAppointment>(
+    `${API_ROUTES.staff.appointments}/${appointmentId}/accept`,
+    {
+      method: 'PATCH',
+    },
+  )
 }
 
-export function assignStaffToAppointment(appointmentId: number, staffId: number) {
-  return apiRequest<void>(`${API_ROUTES.staff.appointments}/${appointmentId}/assign`, {
-    method: 'POST',
-    body: { staffId },
-  })
+export function updateAppointmentStatus(appointmentId: number, status: string) {
+  return apiRequest<StaffAppointment>(
+    `${API_ROUTES.staff.appointments}/${appointmentId}/status`,
+    {
+      method: 'PATCH',
+      body: { status },
+    },
+  )
+}
+
+export function assignStaffToAppointment(appointmentId: number, staffMemberId: number) {
+  return apiRequest<StaffAppointment>(
+    `${API_ROUTES.staff.appointments}/${appointmentId}/assign`,
+    {
+      method: 'PATCH',
+      body: { staffMemberId },
+    },
+  )
 }
 
 export interface CreateServiceRecordRequest {
