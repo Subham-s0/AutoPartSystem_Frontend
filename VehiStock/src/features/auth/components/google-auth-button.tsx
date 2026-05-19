@@ -21,6 +21,9 @@ declare global {
 }
 
 let googleScriptPromise: Promise<void> | null = null
+let isGoogleInitialized = false
+let currentCredentialCallback: ((idToken: string) => void | Promise<void>) | null = null
+let currentErrorCallback: ((message: string) => void) | null = null
 
 function loadGoogleIdentityScript() {
   if (window.google?.accounts?.id) {
@@ -74,6 +77,10 @@ export function GoogleAuthButton({
 }: GoogleAuthButtonProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null)
 
+  // Keep global callbacks fresh for the singleton GSI instance
+  currentCredentialCallback = onCredential
+  currentErrorCallback = onError ?? null
+
   React.useEffect(() => {
     if (!APP_CONFIG.googleClientId) {
       onError?.(
@@ -98,17 +105,22 @@ export function GoogleAuthButton({
           return
         }
 
-        window.google.accounts.id.initialize({
-          client_id: APP_CONFIG.googleClientId,
-          callback: ({ credential }) => {
-            if (!credential) {
-              onError?.('Google did not return an ID token.')
-              return
-            }
+        if (!isGoogleInitialized) {
+          window.google.accounts.id.initialize({
+            client_id: APP_CONFIG.googleClientId,
+            callback: ({ credential }) => {
+              if (!credential) {
+                currentErrorCallback?.('Google did not return an ID token.')
+                return
+              }
 
-            void onCredential(credential)
-          },
-        })
+              if (currentCredentialCallback) {
+                void currentCredentialCallback(credential)
+              }
+            },
+          })
+          isGoogleInitialized = true
+        }
 
         window.google.accounts.id.renderButton(container, {
           type: 'standard',

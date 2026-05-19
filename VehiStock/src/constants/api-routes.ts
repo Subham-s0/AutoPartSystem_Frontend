@@ -40,6 +40,7 @@ export const API_ROUTES = {
     purchaseInvoiceLoyalty: (salesInvoiceId: number | string) =>
       `/api/customer/purchases/${salesInvoiceId}/loyalty`,
     payments: '/api/customer/payments',
+    dashboard: '/api/customer/dashboard',
   },
   admin: {
     notifications: '/api/admin/notifications',
