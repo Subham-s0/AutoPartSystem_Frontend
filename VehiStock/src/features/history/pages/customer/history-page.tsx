@@ -39,7 +39,7 @@ import {
 } from '@/features/history/api/history-api'
 import { initiatePurchaseInvoicePayment } from '@/features/payments/api/payments-api'
 import { KhaltiCheckoutDialog } from '@/features/payments/components/khalti-checkout-dialog'
-import { canPayKhaltiInvoice } from '@/features/payments/components/khalti-checkout-panel'
+import { canPayKhaltiInvoice } from '@/features/payments/lib/khalti-checkout-utils'
 import { redirectToKhaltiCheckout } from '@/features/payments/lib/khalti-checkout'
 import type {
   PurchaseInvoiceLoyaltyResult,

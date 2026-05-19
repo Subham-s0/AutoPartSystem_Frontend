@@ -68,7 +68,9 @@ export function VendorPage() {
   }, [searchQuery, page, fetchVendors])
 
   React.useEffect(() => {
-    setPage(1)
+    queueMicrotask(() => {
+      setPage(1)
+    })
   }, [searchQuery])
 
   const handleOpenModal = (vendor?: Vendor) => {

@@ -113,10 +113,10 @@ export function ReviewsPage() {
 
   React.useEffect(() => {
     let isMounted = true
-    setIsFetching(true)
 
     async function loadReviews() {
       try {
+        setIsFetching(true)
         setError(null)
         const result = await getReviews({
           pageNumber: pagination.page,
@@ -149,7 +149,11 @@ export function ReviewsPage() {
       }
     }
 
-    void loadReviews()
+    queueMicrotask(() => {
+      if (isMounted) {
+        void loadReviews()
+      }
+    })
     return () => { isMounted = false }
   }, [pagination.page, pagination.pageSize, debouncedSearch, sortKey, ratingFilter, reloadKey])
 

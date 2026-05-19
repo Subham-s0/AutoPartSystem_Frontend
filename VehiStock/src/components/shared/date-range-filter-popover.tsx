@@ -77,11 +77,22 @@ export function DateRangeFilterPopover({
       return
     }
 
-    const from = parseDateOnly(fromDate)
-    const to = parseDateOnly(toDate)
-    setRange(from || to ? { from, to } : undefined)
-    setFromTime('00:00')
-    setToTime('23:59')
+    let isActive = true
+    queueMicrotask(() => {
+      if (!isActive) {
+        return
+      }
+
+      const from = parseDateOnly(fromDate)
+      const to = parseDateOnly(toDate)
+      setRange(from || to ? { from, to } : undefined)
+      setFromTime('00:00')
+      setToTime('23:59')
+    })
+
+    return () => {
+      isActive = false
+    }
   }, [open, fromDate, toDate])
 
   function handleApply() {

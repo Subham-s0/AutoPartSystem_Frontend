@@ -65,19 +65,30 @@ export function ReviewFormDialog({
       return
     }
 
-    if (isViewing || isEditing) {
-      if (review) {
-        setRating(review.rating)
-        setReviewText(review.reviewText)
-        setServiceRecordId(String(review.serviceRecordId))
+    let isActive = true
+    queueMicrotask(() => {
+      if (!isActive) {
+        return
       }
-    } else {
-      const firstService = lockedService ?? unreviewedServices[0]
-      setServiceRecordId(firstService ? String(firstService.serviceRecordId) : '')
-      setRating(5)
-      setReviewText('')
+
+      if (isViewing || isEditing) {
+        if (review) {
+          setRating(review.rating)
+          setReviewText(review.reviewText)
+          setServiceRecordId(String(review.serviceRecordId))
+        }
+      } else {
+        const firstService = lockedService ?? unreviewedServices[0]
+        setServiceRecordId(firstService ? String(firstService.serviceRecordId) : '')
+        setRating(5)
+        setReviewText('')
+      }
+      setError(null)
+    })
+
+    return () => {
+      isActive = false
     }
-    setError(null)
   }, [open, isViewing, isEditing, review, unreviewedServices, lockedService])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

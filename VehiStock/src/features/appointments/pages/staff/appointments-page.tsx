@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { CalendarDays, CheckCircle2, AlertTriangle, Search, UserCheck, Wrench } from 'lucide-react'
+import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -45,7 +46,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from '@/components/ui/dialog'
 import { Loader2 } from 'lucide-react'
 
@@ -80,8 +80,8 @@ function CompleteServiceJobForm({
         notes: formData.notes
       })
       onSuccess()
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create service job')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create service job')
     } finally {
       setIsLoading(false)
     }
