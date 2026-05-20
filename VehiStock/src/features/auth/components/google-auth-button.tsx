@@ -21,6 +21,9 @@ declare global {
 }
 
 let googleScriptPromise: Promise<void> | null = null
+let latestOnCredential: ((idToken: string) => void | Promise<void>) | null = null
+let latestOnError: ((message: string) => void) | null = null
+let isGoogleInitialized = false
 let isGoogleInitialized = false
 let currentCredentialCallback: ((idToken: string) => void | Promise<void>) | null = null
 let currentErrorCallback: ((message: string) => void) | null = null
@@ -77,6 +80,9 @@ export function GoogleAuthButton({
 }: GoogleAuthButtonProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null)
 
+  latestOnCredential = onCredential
+  latestOnError = onError
+
   React.useEffect(() => {
     currentCredentialCallback = onCredential
     currentErrorCallback = onError ?? null
@@ -111,6 +117,11 @@ export function GoogleAuthButton({
             client_id: APP_CONFIG.googleClientId,
             callback: ({ credential }) => {
               if (!credential) {
+                latestOnError?.('Google did not return an ID token.')
+                return
+              }
+
+              void latestOnCredential?.(credential)
                 currentErrorCallback?.('Google did not return an ID token.')
                 return
               }

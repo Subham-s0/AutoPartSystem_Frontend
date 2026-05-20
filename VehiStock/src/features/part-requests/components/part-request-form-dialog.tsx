@@ -35,6 +35,8 @@ export function PartRequestFormDialog({
   const [requestedPartName, setRequestedPartName] = React.useState('')
   const [quantity, setQuantity] = React.useState('1')
   const [details, setDetails] = React.useState('')
+  const [photo, setPhoto] = React.useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -96,6 +98,16 @@ export function PartRequestFormDialog({
 
   React.useEffect(() => {
     if (open) {
+      setVehicleId('')
+      setRequestedPartName('')
+      setQuantity('1')
+      setDetails('')
+      setPhoto(null)
+      setPreviewUrl(null)
+      setError(null)
+      setVehicleComboSearch('')
+      setDebouncedVehicleSearch('')
+      setSelectedVehicleSnapshot(null)
       let isActive = true
       queueMicrotask(() => {
         if (!isActive) {
@@ -164,6 +176,7 @@ export function PartRequestFormDialog({
         requestedPartName,
         quantity: Number(quantity),
         details: details.trim() || undefined,
+        photo,
       })
       onOpenChange(false)
     } catch (submitError) {
@@ -242,6 +255,30 @@ export function PartRequestFormDialog({
               rows={3}
               value={details}
             />
+          </label>
+
+          <label className="form-label md:col-span-2">
+            Part Image (Optional)
+            <input
+              accept="image/jpeg,image/png,image/webp"
+              className="form-input mt-1"
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null
+                setPhoto(file)
+                if (previewUrl) URL.revokeObjectURL(previewUrl)
+                setPreviewUrl(file ? URL.createObjectURL(file) : null)
+              }}
+              type="file"
+            />
+            {previewUrl && (
+              <div className="mt-2 rounded-lg overflow-hidden border border-[var(--vs-border)] bg-[var(--vs-bg)] flex items-center justify-center" style={{ maxHeight: 140 }}>
+                <img
+                  alt="Part preview"
+                  className="max-h-36 max-w-full object-contain"
+                  src={previewUrl}
+                />
+              </div>
+            )}
           </label>
 
           {error ? (

@@ -43,6 +43,7 @@ export const API_ROUTES = {
     dashboard: '/api/customer/dashboard',
   },
   admin: {
+    analytics: '/api/admin/analytics',
     notifications: '/api/admin/notifications',
     staff: '/api/admin/staff',
     staffDetail: (userId: string) => `/api/admin/staff/${userId}`,
@@ -50,6 +51,9 @@ export const API_ROUTES = {
     customerDetail: (customerId: number | string) => `/api/admin/customers/${customerId}`,
     vendors: '/api/admin/vendors',
     inventory: '/api/admin/inventory',
+    partRequests: '/api/admin/part-requests',
+    parts: '/api/parts',
+    purchaseInvoices: '/api/purchaseinvoices',
     reports: {
       daily: '/api/admin/reports/daily',
       monthly: '/api/admin/reports/monthly',

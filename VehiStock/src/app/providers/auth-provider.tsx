@@ -35,11 +35,17 @@ async function restoreSession() {
     return null
   }
 
-  const nextSession = mapAuthResponseToSession(
-    await refresh(storedSession.refreshToken),
-  )
-  tokenManager.setSession(nextSession)
-  return nextSession
+  try {
+    const nextSession = mapAuthResponseToSession(
+      await refresh(storedSession.refreshToken),
+    )
+    tokenManager.setSession(nextSession)
+    return nextSession
+  } catch (error) {
+    console.warn('Failed to restore session via refresh token:', error)
+    clearAuthSession()
+    return null
+  }
 }
 
 export function AuthProvider({ children }: React.PropsWithChildren) {
