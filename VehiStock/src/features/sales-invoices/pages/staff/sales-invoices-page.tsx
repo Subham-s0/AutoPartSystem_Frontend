@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, ReceiptText, Trash2, Eye, Mail, Search, FileText, X, AlertCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -90,6 +91,7 @@ const initialForm: InvoiceFormState = {
 
 
 export function SalesInvoicesPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [form, setForm] = React.useState<InvoiceFormState>(initialForm)
   const [lookups, setLookups] = React.useState<SalesInvoiceLookup | null>(null)
   const [lookupError, setLookupError] = React.useState<string | null>(null)
@@ -105,6 +107,14 @@ export function SalesInvoicesPage() {
   const [invoicesError, setInvoicesError] = React.useState<string | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [selectedInvoice, setSelectedInvoice] = React.useState<SalesInvoice | null>(null)
+
+  // Switch tab if query param matches
+  React.useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setActiveTab('create')
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   // Server-side pagination states
   const [page, setPage] = React.useState(1)

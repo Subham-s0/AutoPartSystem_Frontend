@@ -2,6 +2,10 @@ import type { SortRequest } from '@/types/api'
 
 export interface PartRequest {
   partRequestId: number
+  customerId?: number
+  customerName?: string
+  customerEmail?: string
+  customerPhone?: string
   vehicleId?: number | null
   vehicleNumber?: string | null
   vehicleMake?: string | null
@@ -11,6 +15,7 @@ export interface PartRequest {
   requestedPartName: string
   quantity: number
   details?: string | null
+  photoUrl?: string | null
   status: string
   requestDate: string
 }
@@ -28,4 +33,6 @@ export interface CreatePartRequestInput {
   requestedPartName: string
   quantity: number
   details?: string
+  photo?: File | null
+  photoUrl?: string
 }

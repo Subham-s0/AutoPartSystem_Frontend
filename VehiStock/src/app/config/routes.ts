@@ -22,6 +22,7 @@ export const ROUTE_PATHS = {
     appointments: '/staff/appointments',
     salesInvoices: '/staff/sales-invoices',
     customerReports: '/staff/customer-reports',
+    serviceRecords: '/staff/service-records',
   },
   customer: {
     dashboard: '/customer',
@@ -141,6 +142,13 @@ const pageMetaEntries: Array<{ path: string; meta: PageMeta }> = [
     meta: {
       title: 'Customer Reports',
       subtitle: 'Identify regular customers, high spenders, and credits.',
+    },
+  },
+  {
+    path: ROUTE_PATHS.staff.serviceRecords,
+    meta: {
+      title: 'Service Records',
+      subtitle: 'Log diagnoses, parts used, and create service invoices.',
     },
   },
   {

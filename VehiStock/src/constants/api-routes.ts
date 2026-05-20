@@ -42,10 +42,14 @@ export const API_ROUTES = {
     payments: '/api/customer/payments',
   },
   admin: {
+    analytics: '/api/admin/analytics',
     notifications: '/api/admin/notifications',
     staff: '/api/admin/staff',
     vendors: '/api/admin/vendors',
     inventory: '/api/admin/inventory',
+    partRequests: '/api/admin/part-requests',
+    parts: '/api/parts',
+    purchaseInvoices: '/api/purchaseinvoices',
     reports: {
       daily: '/api/admin/reports/daily',
       monthly: '/api/admin/reports/monthly',

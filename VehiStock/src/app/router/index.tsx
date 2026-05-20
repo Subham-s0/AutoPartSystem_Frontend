@@ -9,7 +9,10 @@ import { ROLE_NAMES } from '@/constants/roles'
 import { ProtectedRoute } from './protected-route'
 import { RoleRoute } from './role-route'
 import { AdminDashboardPage } from '@/features/dashboard/pages/admin/admin-dashboard-page'
+import { AnalyticsPage } from '@/features/dashboard/pages/admin/analytics-page'
 import { InventoryPage } from '@/features/inventory/pages/admin/inventory-page'
+import { PurchaseInvoicesPage } from '@/features/purchase-invoices/pages/admin/purchase-invoices-page'
+import { AddPurchaseInvoicePage } from '@/features/purchase-invoices/pages/admin/add-purchase-invoice-page'
 import { NotificationsPage } from '@/features/notifications/pages/admin/notifications-page'
 import { ReportsPage } from '@/features/reports/pages/admin/reports-page'
 import { StaffPage } from '@/features/staff-management/pages/admin/staff-page'
@@ -40,6 +43,9 @@ import { SalesInvoicesPage } from '@/features/sales-invoices/pages/staff/sales-i
 import { StaffDashboardPage } from '@/features/dashboard/pages/staff/staff-dashboard-page'
 import { StaffCustomersPage } from '@/features/customers/pages/staff/staff-customers-page'
 
+import { StaffPartRequestsPage } from '@/features/part-requests/pages/staff/staff-part-requests-page'
+import { StaffServiceRecordsPage } from '@/features/service-records/pages/staff/staff-service-records-page'
+
 export function AppRouter() {
   return (
     <Routes>
@@ -68,12 +74,16 @@ export function AppRouter() {
         <Route element={<RoleRoute allowedRoles={[ROLE_NAMES.admin]} />}>
           <Route path="admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="inventory" element={<InventoryPage />} />
+            <Route path="purchase-invoices" element={<PurchaseInvoicesPage />} />
+            <Route path="purchase-invoices/add" element={<AddPurchaseInvoicePage />} />
             <Route path="vendors" element={<VendorPage />} />
             <Route path="staff" element={<StaffPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="customers" element={<StaffCustomersPage />} />
+            <Route path="part-requests" element={<StaffPartRequestsPage />} />
           </Route>
         </Route>
 
@@ -91,6 +101,8 @@ export function AppRouter() {
               path="customer-reports"
               element={<CustomerReportsPage />}
             />
+            <Route path="part-requests" element={<StaffPartRequestsPage />} />
+            <Route path="service-records" element={<StaffServiceRecordsPage />} />
           </Route>
         </Route>
 
