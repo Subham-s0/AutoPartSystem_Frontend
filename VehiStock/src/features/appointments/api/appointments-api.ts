@@ -82,7 +82,7 @@ export interface CreateServiceRecordRequest {
 }
 
 export async function createServiceRecordFromAppointment(data: CreateServiceRecordRequest) {
-  return apiRequest<any>(`${API_ROUTES.staff.serviceRecords}/from-appointment`, {
+  return apiRequest<unknown>(`${API_ROUTES.staff.serviceRecords}/from-appointment`, {
     method: 'POST',
     body: data,
   })

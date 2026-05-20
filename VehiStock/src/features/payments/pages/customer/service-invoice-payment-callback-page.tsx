@@ -30,10 +30,12 @@ export function ServiceInvoicePaymentCallbackPage() {
     const khaltiStatus = searchParams.get('status')
 
     if (!pidx || !purchaseOrderId) {
-      setStatus('failed')
-      setMessage(
-        'Missing payment reference (pidx) from the Khalti redirect. Please retry the payment.',
-      )
+      queueMicrotask(() => {
+        setStatus('failed')
+        setMessage(
+          'Missing payment reference (pidx) from the Khalti redirect. Please retry the payment.',
+        )
+      })
       return
     }
 

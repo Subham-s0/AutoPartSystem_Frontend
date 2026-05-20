@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,10 @@ import { useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
+function formatChartCurrency(value: unknown) {
+  return typeof value === 'number' ? formatCurrency(value) : formatCurrency(Number(value) || 0)
+}
+
 export function ReportsPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('daily')
@@ -24,7 +28,9 @@ export function ReportsPage() {
   const breakdownPageSize = 5
 
   useEffect(() => {
-    setBreakdownPage(1)
+    queueMicrotask(() => {
+      setBreakdownPage(1)
+    })
   }, [reportData])
 
   // Filters
@@ -33,7 +39,7 @@ export function ReportsPage() {
   const [monthlyYear, setMonthlyYear] = useState(() => new Date().getFullYear().toString())
   const [yearlyYear, setYearlyYear] = useState(() => new Date().getFullYear().toString())
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     setLoading(true)
     try {
       let data
@@ -51,11 +57,13 @@ export function ReportsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeTab, dailyDate, monthlyMonth, monthlyYear, yearlyYear])
 
   useEffect(() => {
-    fetchReport()
-  }, [activeTab, dailyDate, monthlyMonth, monthlyYear, yearlyYear])
+    queueMicrotask(() => {
+      void fetchReport()
+    })
+  }, [fetchReport])
 
   const handleExportCSV = () => {
     if (!reportData || !reportData.breakdown) return
@@ -194,7 +202,7 @@ export function ReportsPage() {
     }
 
     // 4. Footer
-    const pageCount = (doc as any).internal.getNumberOfPages()
+    const pageCount = doc.getNumberOfPages()
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i)
       doc.setFontSize(8)
@@ -498,7 +506,7 @@ export function ReportsPage() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0fdf4" />
                         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#064e3b'}} />
                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#064e3b'}} tickFormatter={(val) => `NPR ${val/1000}k`} />
-                        <Tooltip cursor={{fill: '#f0fdf4'}} formatter={(value: number) => formatCurrency(value)} />
+                        <Tooltip cursor={{fill: '#f0fdf4'}} formatter={formatChartCurrency} />
                         <Legend />
                         <Bar dataKey="salesRevenue" name="Parts Sales" fill="#10b981" radius={[4, 4, 0, 0]} minPointSize={5} />
                         <Bar dataKey="serviceRevenue" name="Services" fill="#3b82f6" radius={[4, 4, 0, 0]} minPointSize={5} />
@@ -524,11 +532,11 @@ export function ReportsPage() {
                             paddingAngle={5}
                             dataKey="value"
                           >
-                            {pieData.map((entry, index) => (
+                            {pieData.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                          <Tooltip formatter={formatChartCurrency} />
                           <Legend verticalAlign="bottom" height={36}/>
                         </PieChart>
                       </ResponsiveContainer>

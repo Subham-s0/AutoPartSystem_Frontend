@@ -24,6 +24,9 @@ let googleScriptPromise: Promise<void> | null = null
 let latestOnCredential: ((idToken: string) => void | Promise<void>) | null = null
 let latestOnError: ((message: string) => void) | null = null
 let isGoogleInitialized = false
+let isGoogleInitialized = false
+let currentCredentialCallback: ((idToken: string) => void | Promise<void>) | null = null
+let currentErrorCallback: ((message: string) => void) | null = null
 
 function loadGoogleIdentityScript() {
   if (window.google?.accounts?.id) {
@@ -81,6 +84,11 @@ export function GoogleAuthButton({
   latestOnError = onError
 
   React.useEffect(() => {
+    currentCredentialCallback = onCredential
+    currentErrorCallback = onError ?? null
+  }, [onCredential, onError])
+
+  React.useEffect(() => {
     if (!APP_CONFIG.googleClientId) {
       onError?.(
         'Google login is not configured. Set VITE_GOOGLE_CLIENT_ID and the matching backend Authentication:Google:ClientId.',
@@ -114,6 +122,13 @@ export function GoogleAuthButton({
               }
 
               void latestOnCredential?.(credential)
+                currentErrorCallback?.('Google did not return an ID token.')
+                return
+              }
+
+              if (currentCredentialCallback) {
+                void currentCredentialCallback(credential)
+              }
             },
           })
           isGoogleInitialized = true

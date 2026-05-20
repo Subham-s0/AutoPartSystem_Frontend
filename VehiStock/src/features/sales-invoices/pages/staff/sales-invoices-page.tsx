@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, ReceiptText, Trash2, Eye, Mail, Search, FileText, X, AlertCircle, Loader2 } from 'lucide-react'
+import { Plus, ReceiptText, Trash2, Eye, Mail, Search, FileText, X, Loader2, Download, Printer } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -40,6 +41,7 @@ import {
   sendInvoiceEmail,
   getSalesInvoices,
   deleteSalesInvoice,
+  getSalesInvoiceById,
 } from '@/features/sales-invoices/api/sales-invoices-api'
 import type {
   SalesInvoice,
@@ -88,6 +90,105 @@ const initialForm: InvoiceFormState = {
   ],
 }
 
+function buildInvoiceTableHtml(invoice: SalesInvoice) {
+  const rows = invoice.items.map((item) => `
+    <tr>
+      <td>${item.partName}</td>
+      <td>${item.brand}</td>
+      <td>${item.quantity}</td>
+      <td>${formatCurrency(item.unitPrice)}</td>
+      <td>${formatCurrency(item.discountAmount)}</td>
+      <td>${formatCurrency(item.lineTotal)}</td>
+    </tr>
+  `).join('')
+
+  return `
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; border:1px solid #e5e7eb; padding:8px;">Part</th>
+          <th style="text-align:left; border:1px solid #e5e7eb; padding:8px;">Brand</th>
+          <th style="text-align:left; border:1px solid #e5e7eb; padding:8px;">Qty</th>
+          <th style="text-align:left; border:1px solid #e5e7eb; padding:8px;">Unit price</th>
+          <th style="text-align:left; border:1px solid #e5e7eb; padding:8px;">Discount</th>
+          <th style="text-align:left; border:1px solid #e5e7eb; padding:8px;">Line total</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `
+}
+
+function printInvoice(invoice: SalesInvoice) {
+  const printWindow = window.open('', '_blank', 'width=1000,height=800')
+  if (!printWindow) {
+    return
+  }
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Invoice ${invoice.invoiceNo}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
+          h1 { margin: 0 0 8px; font-size: 24px; }
+          .meta { margin-bottom: 20px; color: #4b5563; }
+          .summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+          .card { border:1px solid #e5e7eb; border-radius:12px; padding:12px; }
+          .label { font-size:12px; color:#6b7280; margin-bottom:4px; }
+          .value { font-size:14px; font-weight:600; }
+          table { width:100%; border-collapse:collapse; margin-bottom:20px; }
+          th, td { border:1px solid #e5e7eb; padding:8px; font-size:13px; }
+          th { background:#f9fafb; }
+        </style>
+      </head>
+      <body>
+        <h1>Sales Invoice ${invoice.invoiceNo}</h1>
+        <p class="meta">Generated ${new Date().toLocaleString()}</p>
+        <div class="summary">
+          <div class="card"><div class="label">Customer</div><div class="value">${invoice.customerName || invoice.customerId}</div></div>
+          <div class="card"><div class="label">Vehicle</div><div class="value">${invoice.vehicleNumber || invoice.vehicleId}</div></div>
+          <div class="card"><div class="label">Invoice date</div><div class="value">${formatDateOnly(invoice.invoiceDate)}</div></div>
+          <div class="card"><div class="label">Payment status</div><div class="value">${invoice.paymentStatus}</div></div>
+        </div>
+        ${buildInvoiceTableHtml(invoice)}
+        <div class="summary">
+          <div class="card"><div class="label">Total amount</div><div class="value">${formatCurrency(invoice.totalAmount)}</div></div>
+          <div class="card"><div class="label">Balance due</div><div class="value">${formatCurrency(invoice.balanceDue)}</div></div>
+        </div>
+      </body>
+    </html>
+  `)
+  printWindow.document.close()
+  printWindow.focus()
+  printWindow.print()
+}
+
+function exportInvoiceCsv(invoice: SalesInvoice) {
+  const header = ['Invoice No', 'Customer', 'Vehicle', 'Invoice Date', 'Payment Status', 'Part', 'Brand', 'Qty', 'Unit Price', 'Discount', 'Line Total']
+  const rows = invoice.items.map((item) => [
+    invoice.invoiceNo,
+    invoice.customerName || invoice.customerId,
+    invoice.vehicleNumber || invoice.vehicleId,
+    invoice.invoiceDate,
+    invoice.paymentStatus,
+    item.partName,
+    item.brand,
+    item.quantity,
+    item.unitPrice,
+    item.discountAmount,
+    item.lineTotal,
+  ])
+  const csv = [header.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','))].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${invoice.invoiceNo}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 
 
 export function SalesInvoicesPage() {
@@ -107,6 +208,7 @@ export function SalesInvoicesPage() {
   const [invoicesError, setInvoicesError] = React.useState<string | null>(null)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [selectedInvoice, setSelectedInvoice] = React.useState<SalesInvoice | null>(null)
+  const [isLoadingInvoiceDetail, setIsLoadingInvoiceDetail] = React.useState(false)
 
   // Switch tab if query param matches
   React.useEffect(() => {
@@ -151,7 +253,9 @@ export function SalesInvoicesPage() {
   }, [activeTab, searchQuery, page, loadInvoices])
 
   React.useEffect(() => {
-    setPage(1)
+    queueMicrotask(() => {
+      setPage(1)
+    })
   }, [searchQuery])
 
   async function handleDeleteInvoice(invoiceId: number) {
@@ -167,6 +271,18 @@ export function SalesInvoicesPage() {
       }
     } catch (err) {
       alert(err instanceof ApiError || err instanceof Error ? err.message : 'Failed to delete invoice.')
+    }
+  }
+
+  async function handleOpenInvoice(invoice: SalesInvoice) {
+    try {
+      setIsLoadingInvoiceDetail(true)
+      const detail = await getSalesInvoiceById(invoice.salesInvoiceId)
+      setSelectedInvoice(detail)
+    } catch {
+      setSelectedInvoice(invoice)
+    } finally {
+      setIsLoadingInvoiceDetail(false)
     }
   }
 
@@ -206,7 +322,9 @@ export function SalesInvoicesPage() {
 
   React.useEffect(() => {
     if (!form.customerId) {
-      setStaffVehicles([])
+      queueMicrotask(() => {
+        setStaffVehicles([])
+      })
       return
     }
 
@@ -241,15 +359,27 @@ export function SalesInvoicesPage() {
   }, [form.customerId, debouncedVehicleSearch])
 
   React.useEffect(() => {
-    const id = Number(form.vehicleId)
-    if (!id) {
-      setSelectedStaffVehicle(null)
-      return
-    }
+    let isActive = true
 
-    const found = staffVehicles.find((v) => v.vehicleId === id)
-    if (found) {
-      setSelectedStaffVehicle(found)
+    queueMicrotask(() => {
+      if (!isActive) {
+        return
+      }
+
+      const id = Number(form.vehicleId)
+      if (!id) {
+        setSelectedStaffVehicle(null)
+        return
+      }
+
+      const found = staffVehicles.find((v) => v.vehicleId === id)
+      if (found) {
+        setSelectedStaffVehicle(found)
+      }
+    })
+
+    return () => {
+      isActive = false
     }
   }, [staffVehicles, form.vehicleId])
 
@@ -603,7 +733,7 @@ export function SalesInvoicesPage() {
                                 variant="ghost"
                                 className="size-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg"
                                 title="View details"
-                                onClick={() => setSelectedInvoice(inv)}
+                                onClick={() => void handleOpenInvoice(inv)}
                               >
                                 <Eye className="size-4" />
                               </Button>
@@ -1088,6 +1218,16 @@ export function SalesInvoicesPage() {
                   >
                     {emailStatus === 'sending' ? 'Sending invoice email...' : 'Send Invoice via Email (SMTP)'}
                   </Button>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Button onClick={() => exportInvoiceCsv(createdInvoice)} type="button" variant="outline">
+                      <Download className="size-4" />
+                      Export CSV
+                    </Button>
+                    <Button onClick={() => printInvoice(createdInvoice)} type="button" variant="outline">
+                      <Printer className="size-4" />
+                      Print invoice
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ) : null}
@@ -1122,6 +1262,12 @@ export function SalesInvoicesPage() {
 
           {/* Modal Body */}
           <div className="p-6 space-y-6">
+            {isLoadingInvoiceDetail ? (
+              <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Refreshing invoice details...
+              </div>
+            ) : null}
             {/* Billing details grid */}
             <div className="grid gap-6 md:grid-cols-2 bg-gray-50/30 border border-gray-100 rounded-2xl p-5">
               <div className="space-y-1">
@@ -1205,13 +1351,23 @@ export function SalesInvoicesPage() {
 
           {/* Modal Footer */}
           <div className="flex items-center justify-between border-t px-6 py-4.5 bg-gray-50/50">
-            <Button
-              onClick={() => void handleSendEmail(selectedInvoice.salesInvoiceId)}
-              disabled={emailStatus === 'sending'}
-              className="bg-[var(--vs-green-800)] hover:bg-[var(--vs-green-900)] text-white rounded-xl px-4 py-2 text-xs font-semibold"
-            >
-              {emailStatus === 'sending' ? 'Sending invoice...' : 'Send Invoice Email'}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => void handleSendEmail(selectedInvoice.salesInvoiceId)}
+                disabled={emailStatus === 'sending'}
+                className="bg-[var(--vs-green-800)] hover:bg-[var(--vs-green-900)] text-white rounded-xl px-4 py-2 text-xs font-semibold"
+              >
+                {emailStatus === 'sending' ? 'Sending invoice...' : 'Send Invoice Email'}
+              </Button>
+              <Button onClick={() => exportInvoiceCsv(selectedInvoice)} type="button" variant="outline">
+                <Download className="size-4" />
+                Export CSV
+              </Button>
+              <Button onClick={() => printInvoice(selectedInvoice)} type="button" variant="outline">
+                <Printer className="size-4" />
+                Print
+              </Button>
+            </div>
             <Button
               variant="outline"
               className="rounded-xl px-4 py-2 text-xs font-semibold border-gray-200"

@@ -26,8 +26,10 @@ export function ServiceInvoiceCheckoutPage() {
 
   React.useEffect(() => {
     if (!Number.isFinite(serviceInvoiceId) || serviceInvoiceId <= 0) {
-      setLoadError('Invalid invoice id.')
-      setIsLoading(false)
+      queueMicrotask(() => {
+        setLoadError('Invalid invoice id.')
+        setIsLoading(false)
+      })
       return
     }
 

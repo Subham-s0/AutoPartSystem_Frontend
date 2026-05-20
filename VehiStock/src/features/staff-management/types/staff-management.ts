@@ -32,6 +32,21 @@ export interface StaffSummary {
   staffMemberId: number
 }
 
+export interface StaffInvoiceActivity {
+  salesInvoiceId: number
+  invoiceNo: string
+  customerName: string
+  invoiceDate: string
+  totalAmount: number
+  paymentStatus: string
+}
+
+export interface StaffDetail extends StaffSummary {
+  totalInvoicesCreated: number
+  totalInvoiceValue: number
+  recentInvoices: StaffInvoiceActivity[]
+}
+
 export interface UpdateStaffRoleInput {
   role: UserRole | string
 }

@@ -108,6 +108,25 @@ export function PartRequestFormDialog({
       setVehicleComboSearch('')
       setDebouncedVehicleSearch('')
       setSelectedVehicleSnapshot(null)
+      let isActive = true
+      queueMicrotask(() => {
+        if (!isActive) {
+          return
+        }
+
+        setVehicleId('')
+        setRequestedPartName('')
+        setQuantity('1')
+        setDetails('')
+        setError(null)
+        setVehicleComboSearch('')
+        setDebouncedVehicleSearch('')
+        setSelectedVehicleSnapshot(null)
+      })
+
+      return () => {
+        isActive = false
+      }
     }
   }, [open])
 
@@ -119,7 +138,7 @@ export function PartRequestFormDialog({
 
     const found = vehicles.find((v) => v.vehicleId === id)
     if (found) {
-      setSelectedVehicleSnapshot(found)
+      queueMicrotask(() => setSelectedVehicleSnapshot(found))
     }
   }, [vehicles, vehicleId])
 

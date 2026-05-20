@@ -2,6 +2,7 @@ import * as React from 'react'
 import { CreditCard } from 'lucide-react'
 import { formatCurrency } from '@/utils/format'
 import { ApiError } from '@/types/api'
+import { canPayKhaltiInvoice } from '@/features/payments/lib/khalti-checkout-utils'
 
 export interface KhaltiCheckoutSummary {
   title: string
@@ -19,10 +20,6 @@ interface KhaltiCheckoutPanelProps {
   onPay: (amount: number) => Promise<void>
 }
 
-export function canPayKhaltiInvoice(paymentStatus: string, balanceDue: number) {
-  return balanceDue > 0 && paymentStatus !== 'Paid' && paymentStatus !== 'Cancelled'
-}
-
 export function KhaltiCheckoutPanel({ summary, onPay }: KhaltiCheckoutPanelProps) {
   const [amountInput, setAmountInput] = React.useState('')
   const [payError, setPayError] = React.useState<string | null>(null)
@@ -31,8 +28,10 @@ export function KhaltiCheckoutPanel({ summary, onPay }: KhaltiCheckoutPanelProps
   const canPay = canPayKhaltiInvoice(summary.paymentStatus, summary.balanceDue)
 
   React.useEffect(() => {
-    setAmountInput(summary.balanceDue > 0 ? summary.balanceDue.toFixed(2) : '')
-    setPayError(null)
+    queueMicrotask(() => {
+      setAmountInput(summary.balanceDue > 0 ? summary.balanceDue.toFixed(2) : '')
+      setPayError(null)
+    })
   }, [summary.balanceDue, summary.paymentStatus, summary.title])
 
   async function handleCheckout() {
