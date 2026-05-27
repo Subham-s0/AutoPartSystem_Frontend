@@ -28,6 +28,8 @@ let isGoogleInitialized = false
 let currentCredentialCallback: ((idToken: string) => void | Promise<void>) | null = null
 let currentErrorCallback: ((message: string) => void) | null = null
 
+let isGoogleAuthInitialized = false
+
 function loadGoogleIdentityScript() {
   if (window.google?.accounts?.id) {
     return Promise.resolve()
@@ -112,11 +114,20 @@ export function GoogleAuthButton({
           return
         }
 
+        if (!isGoogleAuthInitialized) {
         if (!isGoogleInitialized) {
           window.google.accounts.id.initialize({
             client_id: APP_CONFIG.googleClientId,
             callback: ({ credential }) => {
               if (!credential) {
+                onError?.('Google did not return an ID token.')
+                return
+              }
+
+              void onCredential(credential)
+            },
+          })
+          isGoogleAuthInitialized = true
                 latestOnError?.('Google did not return an ID token.')
                 return
               }
@@ -157,6 +168,9 @@ export function GoogleAuthButton({
     }
   }, [mode, onCredential, onError])
 
+  const isLoopbackIp = typeof window !== 'undefined' && 
+    (window.location.hostname === '127.0.0.1' || window.location.hostname === '::1');
+
   if (!APP_CONFIG.googleClientId) {
     return (
       <div className="rounded-2xl border border-dashed border-[var(--vs-border)] bg-white px-4 py-3 text-sm text-[var(--vs-muted)]">
@@ -167,5 +181,22 @@ export function GoogleAuthButton({
     )
   }
 
-  return <div className="min-h-11" ref={containerRef} />
+  return (
+    <div className="flex flex-col items-center gap-3 w-full">
+      {isLoopbackIp && (
+        <div className="w-full max-w-[320px] rounded-2xl border border-amber-500/20 bg-amber-50 px-4 py-3 text-xs text-amber-800 leading-relaxed text-center">
+          ⚠️ <strong>Google Sign-In Warning:</strong> You are accessing via an IP address. 
+          Google OAuth strictly requires <strong>localhost</strong>. Please click the link below to open:
+          <br />
+          <a 
+            href="http://localhost:5173" 
+            className="inline-block mt-2 font-bold underline hover:text-amber-950 transition"
+          >
+            http://localhost:5173
+          </a>
+        </div>
+      )}
+      <div className="min-h-11" ref={containerRef} />
+    </div>
+  )
 }

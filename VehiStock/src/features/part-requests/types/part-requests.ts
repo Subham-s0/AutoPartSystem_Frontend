@@ -12,6 +12,8 @@ export interface PartRequest {
   vehicleModel?: string | null
   vehicleManufactureYear?: number | null
   vehiclePhotoUrl?: string | null
+  /** URL of the uploaded part image (optional) */
+  partImageUrl?: string | null
   requestedPartName: string
   quantity: number
   details?: string | null
@@ -33,6 +35,18 @@ export interface CreatePartRequestInput {
   requestedPartName: string
   quantity: number
   details?: string
+  /** Optional image of the requested part */
+  partImage?: File | null
+}
+
+/** Admin-side part request response (same shape, returned from admin endpoints) */
+export type AdminPartRequest = PartRequest & {
+  customerName?: string | null
+  customerId?: number | null
+}
+
+export interface UpdatePartRequestStatusInput {
+  status: 'Pending' | 'Ordered' | 'Fulfilled' | 'Cancelled'
   photo?: File | null
   photoUrl?: string
 }

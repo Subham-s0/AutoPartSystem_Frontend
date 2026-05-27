@@ -122,12 +122,18 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       return null
     }
 
-    const nextSession = mapAuthResponseToSession(
-      await refresh(currentSession.refreshToken),
-    )
-    tokenManager.setSession(nextSession)
-    setSession(nextSession)
-    return nextSession
+    try {
+      const nextSession = mapAuthResponseToSession(
+        await refresh(currentSession.refreshToken),
+      )
+      tokenManager.setSession(nextSession)
+      setSession(nextSession)
+      return nextSession
+    } catch (error) {
+      clearAuthSession()
+      setSession(null)
+      return null
+    }
   }, [])
 
   const signOut = React.useCallback(async () => {

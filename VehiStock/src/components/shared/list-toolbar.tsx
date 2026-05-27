@@ -33,9 +33,9 @@ interface ListToolbarProps<TSortKey extends string = string> {
   filterOptions?: FilterOption[]
 
   /** Sort dropdown */
-  sortOptions: SortOption<TSortKey>[]
-  sortKey: TSortKey
-  onSortKeyChange: (value: TSortKey) => void
+  sortOptions?: SortOption<TSortKey>[]
+  sortKey?: TSortKey
+  onSortKeyChange?: (value: TSortKey) => void
 
   /** Additional toolbar actions rendered after the dropdowns */
   extra?: React.ReactNode
@@ -66,7 +66,9 @@ export function ListToolbar<TSortKey extends string = string>({
       : filterLabel ?? 'Filter'
 
   const activeSortLabel =
-    sortOptions.find((opt) => opt.key === sortKey)?.label ?? sortOptions[0]?.label ?? 'Sort'
+    sortOptions && sortKey
+      ? sortOptions.find((opt) => opt.key === sortKey)?.label ?? sortOptions[0]?.label ?? 'Sort'
+      : 'Sort'
 
   return (
     <div className="flex items-center justify-between gap-3 max-md:flex-col max-md:items-stretch">
@@ -123,37 +125,39 @@ export function ListToolbar<TSortKey extends string = string>({
           </DropdownMenu>
         ) : null}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="inline-flex min-h-[38px] max-w-[220px] cursor-pointer items-center justify-center gap-[7px] rounded-full border border-[var(--vs-border)] bg-white px-3.5 text-xs font-bold text-[var(--vs-green-800)] hover:bg-[var(--vs-green-100)] data-[state=open]:bg-[var(--vs-green-100)]"
-              type="button"
-            >
-              <ArrowDownUp size={15} />
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                {activeSortLabel}
-              </span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="!w-[200px] !min-w-[200px]">
-            <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup
-              onValueChange={(value) => onSortKeyChange(value as TSortKey)}
-              value={sortKey}
-            >
-              {sortOptions.map((option) => (
-                <DropdownMenuRadioItem
-                  className="gap-2 py-[7px] pl-2.5 pr-7 text-xs"
-                  key={option.key}
-                  value={option.key}
-                >
-                  {option.label}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {sortOptions && sortKey && onSortKeyChange ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="inline-flex min-h-[38px] max-w-[220px] cursor-pointer items-center justify-center gap-[7px] rounded-full border border-[var(--vs-border)] bg-white px-3.5 text-xs font-bold text-[var(--vs-green-800)] hover:bg-[var(--vs-green-100)] data-[state=open]:bg-[var(--vs-green-100)]"
+                type="button"
+              >
+                <ArrowDownUp size={15} />
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                  {activeSortLabel}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="!w-[200px] !min-w-[200px]">
+              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup
+                onValueChange={(value) => onSortKeyChange(value as TSortKey)}
+                value={sortKey}
+              >
+                {sortOptions.map((option) => (
+                  <DropdownMenuRadioItem
+                    className="gap-2 py-[7px] pl-2.5 pr-7 text-xs"
+                    key={option.key}
+                    value={option.key}
+                  >
+                    {option.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
 
         {extra}
       </div>

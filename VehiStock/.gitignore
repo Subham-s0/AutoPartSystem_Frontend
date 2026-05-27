@@ -1,11 +1,30 @@
+
 # Logs
 logs
 *.log
+=======
+# Vite app dependencies and build output
+VehiStock/node_modules/
+VehiStock/dist/
+VehiStock/dist-ssr/
+VehiStock/.vite/
+VehiStock/coverage/
+
+# Local environment files
+VehiStock/.env
+VehiStock/.env.*
+!VehiStock/.env.example
+
+# Logs
+VehiStock/logs/
+VehiStock/*.log
+>>>>>>> f96a9023b36e3f011ef66632b6b58038c0fb6fea
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
 
 node_modules
 dist
@@ -19,6 +38,13 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+=======
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+>>>>>>> f96a9023b36e3f011ef66632b6b58038c0fb6fea
 *.suo
 *.ntvs*
 *.njsproj

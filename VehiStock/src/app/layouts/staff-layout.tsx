@@ -1,3 +1,5 @@
+import { Plus } from 'lucide-react'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { ClipboardList, Plus } from 'lucide-react'
 import { Link, Outlet } from 'react-router-dom'
 import { getNavigationForRole } from '@/app/config/navigation'
@@ -7,6 +9,8 @@ import { ROLE_NAMES } from '@/constants/roles'
 import { ROUTE_PATHS } from '../config/routes'
 
 export function StaffLayout() {
+  const navigate = useNavigate()
+
   return (
     <div className="layout">
       <AppSidebar
@@ -18,6 +22,22 @@ export function StaffLayout() {
         <AppHeader
           actions={
             <>
+              <button
+                className="tb-btn primary"
+                type="button"
+                onClick={() => navigate('/staff/sales-invoices?tab=create')}
+              >
+                <Plus size={13} />
+                New Sale
+              </button>
+              <button
+                className="tb-btn primary"
+                type="button"
+                onClick={() => navigate('/staff/service-records?tab=create')}
+              >
+                <Plus size={13} />
+                New Service
+              </button>
               <Link to={ROUTE_PATHS.staff.salesInvoices + '?new=true'} className="tb-btn">
                 <Plus size={13} />
                 New Sale

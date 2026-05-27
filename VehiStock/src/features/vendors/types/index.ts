@@ -4,7 +4,7 @@ export interface Vendor {
   vendorCode: string
   contactPerson: string
   email: string
-  phoneNumber: string
+  phone: string
   address: string
 }
 
@@ -13,6 +13,6 @@ export interface VendorUpsertRequest {
   vendorCode: string
   contactPerson: string
   email: string
-  phoneNumber: string
+  phone: string
   address: string
 }
