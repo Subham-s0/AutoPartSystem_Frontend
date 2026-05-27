@@ -9,11 +9,15 @@ import { ROLE_NAMES } from '@/constants/roles'
 import { ProtectedRoute } from './protected-route'
 import { RoleRoute } from './role-route'
 import { AdminDashboardPage } from '@/features/dashboard/pages/admin/admin-dashboard-page'
+import { AdminAnalyticsPage } from '@/features/dashboard/pages/admin/admin-analytics-page'
+import { AdminPartRequestsPage } from '@/features/dashboard/pages/admin/admin-part-requests-page'
 import { InventoryPage } from '@/features/inventory/pages/admin/inventory-page'
+import { PurchaseInvoicesPage } from '@/features/purchase-invoices/pages/admin/purchase-invoices-page'
 import { NotificationsPage } from '@/features/notifications/pages/admin/notifications-page'
 import { ReportsPage } from '@/features/reports/pages/admin/reports-page'
 import { StaffPage } from '@/features/staff-management/pages/admin/staff-page'
 import { VendorPage } from '@/features/vendors/pages/admin/vendor-page'
+import { VendorFormPage } from '@/features/vendors/pages/admin/vendor-form-page'
 import { CustomerDashboardPage } from '@/features/dashboard/pages/customer/customer-dashboard-page'
 import { BookAppointmentPage } from '@/features/appointments/pages/customer/book-appointment-page'
 import { CustomerHistoryPage } from '@/features/history/pages/customer/history-page'
@@ -39,6 +43,7 @@ import { CustomerReportsPage } from '@/features/reports/pages/staff/customer-rep
 import { SalesInvoicesPage } from '@/features/sales-invoices/pages/staff/sales-invoices-page'
 import { StaffDashboardPage } from '@/features/dashboard/pages/staff/staff-dashboard-page'
 import { StaffCustomersPage } from '@/features/customers/pages/staff/staff-customers-page'
+import { StaffServiceRecordsPage } from '@/features/service-records/pages/staff/staff-service-records-page'
 
 export function AppRouter() {
   return (
@@ -68,12 +73,17 @@ export function AppRouter() {
         <Route element={<RoleRoute allowedRoles={[ROLE_NAMES.admin]} />}>
           <Route path="admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardPage />} />
+            <Route path="analytics" element={<AdminAnalyticsPage />} />
             <Route path="inventory" element={<InventoryPage />} />
+            <Route path="purchase-invoices" element={<PurchaseInvoicesPage />} />
             <Route path="vendors" element={<VendorPage />} />
+            <Route path="vendors/new" element={<VendorFormPage />} />
+            <Route path="vendors/:vendorId/edit" element={<VendorFormPage />} />
             <Route path="staff" element={<StaffPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="customers" element={<StaffCustomersPage />} />
+            <Route path="part-requests" element={<AdminPartRequestsPage />} />
           </Route>
         </Route>
 
@@ -87,6 +97,7 @@ export function AppRouter() {
             <Route path="customers" element={<StaffCustomersPage />} />
             <Route path="appointments" element={<AppointmentsPage />} />
             <Route path="sales-invoices" element={<SalesInvoicesPage />} />
+            <Route path="service-records" element={<StaffServiceRecordsPage />} />
             <Route
               path="customer-reports"
               element={<CustomerReportsPage />}

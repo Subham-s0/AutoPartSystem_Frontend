@@ -46,6 +46,10 @@ export const API_ROUTES = {
     staff: '/api/admin/staff',
     vendors: '/api/admin/vendors',
     inventory: '/api/admin/inventory',
+    /** Admin part-request management (new) */
+    partRequests: '/api/admin/part-requests',
+    /** Analytics / dashboard summary (new) */
+    analytics: '/api/admin/analytics/dashboard-summary',
     reports: {
       daily: '/api/admin/reports/daily',
       monthly: '/api/admin/reports/monthly',
@@ -66,4 +70,6 @@ export const API_ROUTES = {
       pendingCredits: '/api/staff/reports/customers/pending-credits',
     },
   },
+  /** Parts (inventory) — GET /api/parts with pagination */
+  parts: '/api/parts',
 } as const

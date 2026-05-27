@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, ReceiptText, Trash2, Eye, Mail, Search, FileText, X, AlertCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -98,8 +99,22 @@ export function SalesInvoicesPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [createdInvoice, setCreatedInvoice] = React.useState<SalesInvoice | null>(null)
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
+
   // Listing states
-  const [activeTab, setActiveTab] = React.useState<'list' | 'create'>('list')
+  const [activeTab, setActiveTab] = React.useState<'list' | 'create'>(
+    tabParam === 'create' ? 'create' : 'list'
+  )
+
+  React.useEffect(() => {
+    if (tabParam === 'create') {
+      setActiveTab('create')
+    } else if (tabParam === 'list') {
+      setActiveTab('list')
+    }
+  }, [tabParam])
+
   const [invoices, setInvoices] = React.useState<SalesInvoice[]>([])
   const [isLoadingInvoices, setIsLoadingInvoices] = React.useState(true)
   const [invoicesError, setInvoicesError] = React.useState<string | null>(null)
@@ -483,7 +498,10 @@ export function SalesInvoicesPage() {
         {/* Navigation Tabs */}
         <div className="flex border-b border-gray-200 gap-6 mb-6">
           <button
-            onClick={() => setActiveTab('list')}
+            onClick={() => {
+              setActiveTab('list')
+              setSearchParams({})
+            }}
             className={`pb-3 font-semibold text-sm transition-colors relative ${
               activeTab === 'list'
                 ? 'text-[var(--vs-green-800)] border-b-2 border-[var(--vs-green-800)]'
@@ -493,7 +511,10 @@ export function SalesInvoicesPage() {
             Invoice History
           </button>
           <button
-            onClick={() => setActiveTab('create')}
+            onClick={() => {
+              setActiveTab('create')
+              setSearchParams({ tab: 'create' })
+            }}
             className={`pb-3 font-semibold text-sm transition-colors relative ${
               activeTab === 'create'
                 ? 'text-[var(--vs-green-800)] border-b-2 border-[var(--vs-green-800)]'

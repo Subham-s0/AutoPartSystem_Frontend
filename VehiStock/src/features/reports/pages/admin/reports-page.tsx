@@ -447,8 +447,8 @@ export function ReportsPage() {
             <Card className="col-span-1 lg:col-span-2 border-emerald-100 shadow-sm bg-white">
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  <div className="h-[350px] w-full xl:col-span-2">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="h-[350px] w-full xl:col-span-2 min-w-0">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <BarChart data={reportData.breakdown} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0fdf4" />
                         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#064e3b'}} />
@@ -460,14 +460,14 @@ export function ReportsPage() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="h-[350px] w-full xl:col-span-1 flex flex-col items-center justify-center xl:border-l xl:border-emerald-50 xl:pl-6">
+                  <div className="h-[350px] w-full xl:col-span-1 min-w-0 flex flex-col items-center justify-center xl:border-l xl:border-emerald-50 xl:pl-6">
                     {reportData?.totalSalesRevenue === 0 && reportData?.totalPurchaseCost === 0 ? (
                       <div className="flex flex-col items-center justify-center h-[85%] text-emerald-800/40">
                         <PieChartIcon size={48} className="mb-4 opacity-20" />
                         <p className="text-sm font-medium">No data for this period</p>
                       </div>
                     ) : (
-                      <ResponsiveContainer width="100%" height="85%">
+                      <ResponsiveContainer width="100%" height="85%" minWidth={0}>
                         <PieChart>
                           <Pie
                             data={pieData}

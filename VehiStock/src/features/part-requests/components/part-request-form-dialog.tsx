@@ -35,6 +35,8 @@ export function PartRequestFormDialog({
   const [requestedPartName, setRequestedPartName] = React.useState('')
   const [quantity, setQuantity] = React.useState('1')
   const [details, setDetails] = React.useState('')
+  const [partImage, setPartImage] = React.useState<File | null>(null)
+  const [imagePreview, setImagePreview] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -100,12 +102,24 @@ export function PartRequestFormDialog({
       setRequestedPartName('')
       setQuantity('1')
       setDetails('')
+      setPartImage(null)
+      setImagePreview(null)
       setError(null)
       setVehicleComboSearch('')
       setDebouncedVehicleSearch('')
       setSelectedVehicleSnapshot(null)
     }
   }, [open])
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    setPartImage(file)
+    if (file) {
+      setImagePreview(URL.createObjectURL(file))
+    } else {
+      setImagePreview(null)
+    }
+  }
 
   React.useEffect(() => {
     const id = Number(vehicleId)
@@ -153,6 +167,7 @@ export function PartRequestFormDialog({
         requestedPartName,
         quantity: Number(quantity),
         details: details.trim() || undefined,
+        partImage: partImage ?? undefined,
       })
       onOpenChange(false)
     } catch (submitError) {
@@ -231,6 +246,23 @@ export function PartRequestFormDialog({
               rows={3}
               value={details}
             />
+          </label>
+
+          <label className="form-label md:col-span-2">
+            Part image (optional)
+            <input
+              accept="image/*"
+              className="mt-1 block w-full text-sm text-[var(--vs-muted)] file:mr-3 file:rounded-full file:border-0 file:bg-[var(--vs-green-100)] file:px-3 file:py-1 file:text-xs file:font-medium"
+              onChange={handleImageChange}
+              type="file"
+            />
+            {imagePreview && (
+              <img
+                alt="Part preview"
+                className="mt-2 h-32 w-32 rounded-xl object-cover ring-1 ring-[var(--vs-border)]"
+                src={imagePreview}
+              />
+            )}
           </label>
 
           {error ? (

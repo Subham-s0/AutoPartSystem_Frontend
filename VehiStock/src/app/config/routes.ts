@@ -8,12 +8,18 @@ export const ROUTE_PATHS = {
   adminLogin: '/admin/login',
   admin: {
     dashboard: '/admin',
+    analytics: '/admin/analytics',
     inventory: '/admin/inventory',
+    purchaseInvoices: '/admin/purchase-invoices',
     vendors: '/admin/vendors',
+    vendorNew: '/admin/vendors/new',
+    vendorEdit: (vendorId: number | string) => `/admin/vendors/${vendorId}/edit`,
     staff: '/admin/staff',
     reports: '/admin/reports',
     notifications: '/admin/notifications',
     customers: '/admin/customers',
+    /** Admin part-request management page (new) */
+    partRequests: '/admin/part-requests',
   },
   staff: {
     dashboard: '/staff',
@@ -21,6 +27,7 @@ export const ROUTE_PATHS = {
     customers: '/staff/customers',
     appointments: '/staff/appointments',
     salesInvoices: '/staff/sales-invoices',
+    serviceRecords: '/staff/service-records',
     customerReports: '/staff/customer-reports',
   },
   customer: {
@@ -60,6 +67,13 @@ const pageMetaEntries: Array<{ path: string; meta: PageMeta }> = [
     },
   },
   {
+    path: ROUTE_PATHS.admin.analytics,
+    meta: {
+      title: 'Analytics Dashboard',
+      subtitle: 'Visual business intelligence and metrics.',
+    },
+  },
+  {
     path: ROUTE_PATHS.admin.inventory,
     meta: {
       title: 'Inventory',
@@ -67,10 +81,24 @@ const pageMetaEntries: Array<{ path: string; meta: PageMeta }> = [
     },
   },
   {
+    path: ROUTE_PATHS.admin.purchaseInvoices,
+    meta: {
+      title: 'Purchase Invoices',
+      subtitle: 'Create purchase invoices and update inventory stock.',
+    },
+  },
+  {
     path: ROUTE_PATHS.admin.vendors,
     meta: {
       title: 'Vendors',
       subtitle: 'Maintain supplier relationships and procurement flow.',
+    },
+  },
+  {
+    path: ROUTE_PATHS.admin.vendorNew,
+    meta: {
+      title: 'Add Vendor',
+      subtitle: 'Register a new supplier profile.',
     },
   },
   {
@@ -102,10 +130,24 @@ const pageMetaEntries: Array<{ path: string; meta: PageMeta }> = [
     },
   },
   {
+    path: ROUTE_PATHS.admin.partRequests,
+    meta: {
+      title: 'Part Requests',
+      subtitle: 'Review and manage customer part requests.',
+    },
+  },
+  {
     path: ROUTE_PATHS.staff.dashboard,
     meta: {
       title: 'Staff Dashboard',
       subtitle: 'Handle sales, appointments, and customer follow-up.',
+    },
+  },
+  {
+    path: ROUTE_PATHS.staff.serviceRecords,
+    meta: {
+      title: 'Service Records',
+      subtitle: 'Track work progress, labor, parts used, and generate service invoices.',
     },
   },
   {

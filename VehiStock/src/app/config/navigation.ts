@@ -30,9 +30,19 @@ const adminNavigation: NavigationSection[] = [
         icon: LayoutDashboard,
       },
       {
+        label: 'Analytics',
+        to: ROUTE_PATHS.admin.analytics,
+        icon: BarChart3,
+      },
+      {
         label: 'Inventory',
         to: ROUTE_PATHS.admin.inventory,
         icon: Warehouse,
+      },
+      {
+        label: 'Purchase Invoices',
+        to: ROUTE_PATHS.admin.purchaseInvoices,
+        icon: FileText,
       },
       {
         label: 'Vendors',
@@ -55,9 +65,14 @@ const adminNavigation: NavigationSection[] = [
         icon: Users,
       },
       {
+        label: 'Part Requests',
+        to: ROUTE_PATHS.admin.partRequests,
+        icon: Wrench,
+      },
+      {
         label: 'Reports',
         to: ROUTE_PATHS.admin.reports,
-        icon: BarChart3,
+        icon: FileText,
       },
       {
         label: 'Notifications',
@@ -96,6 +111,11 @@ const staffNavigation: NavigationSection[] = [
         label: 'Sales Invoices',
         to: ROUTE_PATHS.staff.salesInvoices,
         icon: ShoppingCart,
+      },
+      {
+        label: 'Service Records',
+        to: ROUTE_PATHS.staff.serviceRecords,
+        icon: Wrench,
       },
       {
         label: 'Customer Reports',

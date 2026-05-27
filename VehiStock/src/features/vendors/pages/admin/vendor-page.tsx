@@ -1,370 +1,340 @@
 import * as React from 'react'
-import { 
-  Building2, 
-  Plus, 
-  Search, 
-  Edit2, 
-  Trash2, 
-  User,
-  X,
-  Loader2,
-  AlertCircle
+import { useNavigate, Link } from 'react-router-dom'
+import { ROUTE_PATHS } from '@/app/config/routes'
+import {
+  Building2,
+  Edit2,
+  Eye,
+  MoreVertical,
+  Phone,
+  Plus,
+  Trash2,
 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { DataTable } from '@/components/shared/data-table'
+import { ErrorAlert } from '@/components/shared/error-alert'
+import { ListToolbar } from '@/components/shared/list-toolbar'
 import { PageSection } from '@/components/shared/page-section'
-import { 
-  getAllVendors, 
-  createVendor, 
-  updateVendor, 
-  deleteVendor 
+import { PaginationFooter } from '@/components/shared/pagination-footer'
+import {
+  deleteVendor,
+  getAllVendors,
 } from '@/features/vendors/api/vendors-api'
-import type { Vendor, VendorUpsertRequest } from '@/features/vendors/types'
+import type { Vendor } from '@/features/vendors/types'
+import { usePagination } from '@/hooks/use-pagination'
 import { ApiError } from '@/types/api'
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export function VendorPage() {
-  const [vendors, setVendors] = React.useState<Vendor[]>([])
-  const [isLoading, setIsLoading] = React.useState(true)
-  const [error, setError] = React.useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = React.useState('')
-  
-  // Server-side pagination states
-  const [page, setPage] = React.useState(1)
-  const [totalPages, setTotalPages] = React.useState(1)
+  const navigate = useNavigate()
+  const pagination = usePagination(1, 10)
+  const [items, setItems] = React.useState<Vendor[]>([])
   const [totalRecords, setTotalRecords] = React.useState(0)
-  const pageSize = 10
+  const [totalPages, setTotalPages] = React.useState(1)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = React.useState<string | null>(null)
+  const [reloadKey, setReloadKey] = React.useState(0)
 
-  const [isModalOpen, setIsModalOpen] = React.useState(false)
-  const [editingVendor, setEditingVendor] = React.useState<Vendor | null>(null)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  // Filters
+  const [searchText, setSearchText] = React.useState('')
 
-  const [formData, setFormData] = React.useState<VendorUpsertRequest>({
-    vendorName: '',
-    vendorCode: '',
-    contactPerson: '',
-    email: '',
-    phoneNumber: '',
-    address: ''
-  })
+  // Detail dialog
+  const [detailItem, setDetailItem] = React.useState<Vendor | null>(null)
 
-  const fetchVendors = React.useCallback(async (q: string, targetPage: number) => {
-    setIsLoading(true)
+  // Delete
+  const [deleteTarget, setDeleteTarget] = React.useState<Vendor | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
+
+  // ── Load ──────────────────────────────────────────────────────────────────
+  React.useEffect(() => {
+    let mounted = true
+    setLoading(true)
     setError(null)
-    try {
-      const res = await getAllVendors(q, targetPage, pageSize)
-      setVendors(res.items)
-      setTotalPages(res.totalPages)
-      setTotalRecords(res.totalRecords)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load vendors')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
 
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      void fetchVendors(searchQuery, page)
-    }, 300)
-    return () => clearTimeout(timeoutId)
-  }, [searchQuery, page, fetchVendors])
-
-  React.useEffect(() => {
-    setPage(1)
-  }, [searchQuery])
-
-  const handleOpenModal = (vendor?: Vendor) => {
-    if (vendor) {
-      setEditingVendor(vendor)
-      setFormData({
-        vendorName: vendor.vendorName,
-        vendorCode: vendor.vendorCode,
-        contactPerson: vendor.contactPerson,
-        email: vendor.email,
-        phoneNumber: vendor.phoneNumber,
-        address: vendor.address
+    getAllVendors(searchText.trim() || undefined, pagination.page, pagination.pageSize)
+      .then((res) => {
+        if (!mounted) return
+        setItems(res.items)
+        setTotalRecords(res.totalRecords)
+        setTotalPages(res.totalPages > 0 ? res.totalPages : 1)
       })
-    } else {
-      setEditingVendor(null)
-      setFormData({
-        vendorName: '',
-        vendorCode: '',
-        contactPerson: '',
-        email: '',
-        phoneNumber: '',
-        address: ''
+      .catch((err) => {
+        if (!mounted) return
+        setError(err instanceof ApiError || err instanceof Error ? err.message : 'Failed to load vendors.')
       })
-    }
-    setIsModalOpen(true)
+      .finally(() => { if (mounted) setLoading(false) })
+
+    return () => { mounted = false }
+  }, [pagination.page, pagination.pageSize, searchText, reloadKey])
+
+  function reload() { setReloadKey((k) => k + 1) }
+  function resetToFirstPage() { pagination.setPage(1) }
+
+  function openCreate() {
+    navigate(ROUTE_PATHS.admin.vendorNew)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+  function openEdit(vendor: Vendor) {
+    navigate(ROUTE_PATHS.admin.vendorEdit(vendor.vendorId))
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    setIsDeleting(true)
     try {
-      if (editingVendor) {
-        await updateVendor(editingVendor.vendorId, formData)
-      } else {
-        await createVendor(formData)
-      }
-      await fetchVendors(searchQuery, page)
-      setIsModalOpen(false)
+      await deleteVendor(deleteTarget.vendorId)
+      setSuccessMessage(`"${deleteTarget.vendorName}" deleted.`)
+      setDeleteTarget(null)
+      reload()
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Operation failed')
+      setError(err instanceof ApiError || err instanceof Error ? err.message : 'Delete failed.')
+      setDeleteTarget(null)
     } finally {
-      setIsSubmitting(false)
+      setIsDeleting(false)
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this vendor?')) return
-    try {
-      await deleteVendor(id)
-      await fetchVendors(searchQuery, page)
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Delete failed')
-    }
+  function field(label: string, value: string) {
+    return (
+      <div key={label} className="rounded-lg border border-[var(--vs-border)] bg-[var(--vs-bg)] p-3">
+        <div className="text-[11px] font-bold uppercase text-[var(--vs-muted)]">{label}</div>
+        <div className="mt-1 text-sm break-all">{value || '—'}</div>
+      </div>
+    )
   }
 
-  const filteredVendors = vendors
+  const hasFilters = Boolean(searchText.trim())
 
   return (
     <PageSection
-      description="Manage your business suppliers and procurement codes."
-      title="Vendor Management"
+      title="Vendors"
+      description="Manage your business suppliers and procurement contacts."
+      actions={(
+        <Link className="tb-btn primary inline-flex items-center gap-1.5" to={ROUTE_PATHS.admin.vendorNew}>
+          <Plus size={15} /> Add Vendor
+        </Link>
+      )}
     >
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            <input
-              className="w-full rounded-xl border border-input bg-background pl-12 pr-4 py-2 text-sm outline-none transition focus:ring-2 focus:ring-primary/20"
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search vendors..."
-              type="text"
-              value={searchQuery}
-            />
-          </div>
-          <button
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-            onClick={() => handleOpenModal()}
-          >
-            <Plus size={18} />
-            Add Vendor
-          </button>
-        </div>
-
-        {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            <AlertCircle size={18} />
-            {error}
-          </div>
-        )}
-
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-              <Loader2 className="animate-spin mb-4" size={40} />
-              <p>Loading vendors...</p>
-            </div>
-          ) : filteredVendors.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-              <Building2 className="mb-4 opacity-20" size={60} />
-              <p>No vendors found</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="px-6 py-3 text-xs font-bold uppercase text-muted-foreground">Vendor</th>
-                    <th className="px-6 py-3 text-xs font-bold uppercase text-muted-foreground">Contact</th>
-                    <th className="px-6 py-3 text-xs font-bold uppercase text-muted-foreground text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredVendors.map((vendor) => (
-                    <tr className="hover:bg-muted/30" key={vendor.vendorId}>
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-foreground">{vendor.vendorName}</div>
-                        <div className="text-xs text-muted-foreground">#{vendor.vendorCode}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="text-muted-foreground" size={14} />
-                          {vendor.contactPerson}
-                        </div>
-                        <div className="text-xs text-muted-foreground">{vendor.email}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            className="p-2 text-muted-foreground hover:text-primary transition"
-                            onClick={() => handleOpenModal(vendor)}
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            className="p-2 text-muted-foreground hover:text-destructive transition"
-                            onClick={() => handleDelete(vendor.vendorId)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {totalRecords > 0 && (
-                <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border bg-muted/20">
-                  <p className="text-xs font-semibold text-muted-foreground">
-                    Showing {totalRecords === 0 ? 0 : (page - 1) * 10 + 1} to {Math.min(totalRecords, page * 10)} of {totalRecords} vendors
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      disabled={page <= 1}
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      className="inline-flex items-center justify-center rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-semibold shadow-sm transition hover:bg-muted disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    
-                    {Array.from({ length: totalPages || 1 }).map((_, index) => {
-                      const p = index + 1
-                      return (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setPage(p)}
-                          className={`inline-flex size-8 items-center justify-center rounded-lg text-xs font-bold transition ${
-                            page === p
-                              ? 'bg-primary text-primary-foreground shadow-sm'
-                              : 'border border-input bg-background hover:bg-muted text-foreground'
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      )
-                    })}
-                    
-                    <button
-                      type="button"
-                      disabled={page >= totalPages}
-                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                      className="inline-flex items-center justify-center rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-semibold shadow-sm transition hover:bg-muted disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl bg-card shadow-xl overflow-hidden border border-border animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <h3 className="text-lg font-semibold">
-                {editingVendor ? 'Edit Vendor' : 'Add New Vendor'}
-              </h3>
-              <button onClick={() => setIsModalOpen(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            
-            <form className="p-6 space-y-4" onSubmit={handleSubmit}>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Name</label>
-                  <input
-                    className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                    onChange={e => setFormData({ ...formData, vendorName: e.target.value })}
-                    required
-                    type="text"
-                    value={formData.vendorName}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Code</label>
-                  <input
-                    className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                    onChange={e => setFormData({ ...formData, vendorCode: e.target.value })}
-                    required
-                    type="text"
-                    value={formData.vendorCode}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Contact Person</label>
-                <input
-                  className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                  onChange={e => setFormData({ ...formData, contactPerson: e.target.value })}
-                  required
-                  type="text"
-                  value={formData.contactPerson}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Email</label>
-                  <input
-                    className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                    required
-                    type="email"
-                    value={formData.email}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Phone</label>
-                  <input
-                    className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                    onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    required
-                    type="tel"
-                    value={formData.phoneNumber}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Address</label>
-                <textarea
-                  className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-                  onChange={e => setFormData({ ...formData, address: e.target.value })}
-                  required
-                  rows={3}
-                  value={formData.address}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  className="flex-1 rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold transition hover:bg-muted"
-                  onClick={() => setIsModalOpen(false)}
-                  type="button"
-                >
-                  Cancel
-                </button>
-                <button
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-70"
-                  disabled={isSubmitting}
-                  type="submit"
-                >
-                  {isSubmitting && <Loader2 className="animate-spin" size={16} />}
-                  {editingVendor ? 'Save Changes' : 'Create Vendor'}
-                </button>
-              </div>
-            </form>
-          </div>
+      {/* ── Messages ─────────────────────────────────────────────────── */}
+      {successMessage && (
+        <div className="mb-4 rounded-2xl border border-[var(--vs-green-600)]/15 bg-[var(--vs-green-100)] px-4 py-3 text-sm text-[var(--vs-green-900)]">
+          {successMessage}
         </div>
       )}
+      {error && <ErrorAlert message={error} />}
+
+      <div className="space-y-4">
+        {/* ── Toolbar ────────────────────────────────────────────────── */}
+        <ListToolbar
+          searchPlaceholder="Vendor name, code or contact"
+          searchAriaLabel="Search vendors"
+          searchText={searchText}
+          onSearchTextChange={(v) => { resetToFirstPage(); setSearchText(v); setSuccessMessage(null) }}
+        />
+
+        {/* ── Table ──────────────────────────────────────────────────── */}
+        <DataTable
+          rows={items}
+          emptyMessage={
+            loading
+              ? 'Loading vendors…'
+              : hasFilters
+                ? 'No vendors match your search.'
+                : 'No vendors added yet.'
+          }
+          columns={[
+            {
+              key: 'vendor',
+              header: 'Vendor',
+              className: 'min-w-[140px]',
+              render: (v) => (
+                <div>
+                  <button
+                    className="font-semibold text-left underline-offset-2 hover:underline hover:text-[var(--vs-green-700)] transition-colors text-xs sm:text-sm"
+                    onClick={() => setDetailItem(v)}
+                    type="button"
+                  >
+                    {v.vendorName}
+                  </button>
+                  <div className="text-xs text-[var(--vs-muted)] font-mono">#{v.vendorCode}</div>
+                </div>
+              ),
+            },
+            {
+              key: 'contact',
+              header: 'Contact Person',
+              className: 'w-[160px]',
+              render: (v) => v.contactPerson,
+            },
+            {
+              key: 'email',
+              header: 'Email',
+              className: 'w-[200px] text-[var(--vs-muted)]',
+              render: (v) => (
+                <a
+                  className="hover:text-[var(--vs-green-700)] transition-colors"
+                  href={`mailto:${v.email}`}
+                >
+                  {v.email}
+                </a>
+              ),
+            },
+            {
+              key: 'phone',
+              header: 'Phone',
+              className: 'w-[130px]',
+              render: (v) => (
+                <a
+                  className="inline-flex items-center gap-1 hover:text-[var(--vs-green-700)] transition-colors"
+                  href={`tel:${v.phone}`}
+                >
+                  <Phone size={12} /> {v.phone}
+                </a>
+              ),
+            },
+            {
+              key: 'actions',
+              header: '',
+              className: '!w-9 !min-w-9 !max-w-9 !px-1 !text-center',
+              render: (v) => (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      aria-label={`Actions for ${v.vendorName}`}
+                      className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-[var(--vs-muted)] hover:bg-[var(--vs-green-100)] hover:text-[var(--vs-green-800)] data-[state=open]:bg-[var(--vs-green-100)] data-[state=open]:text-[var(--vs-green-800)]"
+                      type="button"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="!w-[160px] !min-w-[160px]">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2 px-2.5 py-2 text-xs"
+                      onSelect={() => window.setTimeout(() => setDetailItem(v), 0)}
+                    >
+                      <Eye size={14} /> View details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="gap-2 px-2.5 py-2 text-xs"
+                      onSelect={() => window.setTimeout(() => openEdit(v), 0)}
+                    >
+                      <Edit2 size={14} /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2 px-2.5 py-2 text-xs !text-[var(--vs-red)]"
+                      onSelect={() => window.setTimeout(() => setDeleteTarget(v), 0)}
+                    >
+                      <Trash2 size={14} /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ),
+            },
+          ]}
+        />
+
+        {/* ── Pagination ─────────────────────────────────────────────── */}
+        <PaginationFooter
+          pageNumber={pagination.page}
+          pageSize={pagination.pageSize}
+          totalRecords={totalRecords}
+          totalPages={totalPages}
+          itemCount={items.length}
+          isLoading={loading}
+          onPrevious={() => pagination.setPage((p) => Math.max(1, p - 1))}
+          onNext={() => pagination.setPage((p) => Math.min(totalPages, p + 1))}
+        />
+      </div>
+
+      {/* ── Detail Dialog ──────────────────────────────────────────────── */}
+      <Dialog onOpenChange={(open) => !open && setDetailItem(null)} open={detailItem !== null}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              <span className="flex items-center gap-2">
+                <Building2 size={18} /> {detailItem?.vendorName}
+              </span>
+            </DialogTitle>
+            <DialogDescription>Code: {detailItem?.vendorCode}</DialogDescription>
+          </DialogHeader>
+          {detailItem && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {field('Contact Person', detailItem.contactPerson)}
+              {field('Phone', detailItem.phone)}
+              {field('Email', detailItem.email)}
+              {field('Address', detailItem.address)}
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <button
+              className="tb-btn"
+              onClick={() => { setDetailItem(null); openEdit(detailItem!) }}
+              type="button"
+            >
+              <Edit2 size={14} /> Edit
+            </button>
+            <button className="tb-btn primary" onClick={() => setDetailItem(null)} type="button">
+              Close
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Confirm ─────────────────────────────────────────────── */}
+      <AlertDialog
+        onOpenChange={(open) => !open && !isDeleting && setDeleteTarget(null)}
+        open={deleteTarget !== null}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deleteTarget?.vendorName}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this vendor. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting} type="button">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-[var(--vs-red)] hover:bg-[var(--vs-red)]/90"
+              disabled={isDeleting}
+              onClick={() => void handleDelete()}
+              type="button"
+            >
+              {isDeleting ? 'Deleting…' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageSection>
   )
 }
