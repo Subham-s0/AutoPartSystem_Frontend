@@ -37,6 +37,8 @@ export function PartRequestFormDialog({
   const [details, setDetails] = React.useState('')
   const [partImage, setPartImage] = React.useState<File | null>(null)
   const [imagePreview, setImagePreview] = React.useState<string | null>(null)
+  const [photo, setPhoto] = React.useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -104,10 +106,31 @@ export function PartRequestFormDialog({
       setDetails('')
       setPartImage(null)
       setImagePreview(null)
+      setPhoto(null)
+      setPreviewUrl(null)
       setError(null)
       setVehicleComboSearch('')
       setDebouncedVehicleSearch('')
       setSelectedVehicleSnapshot(null)
+      let isActive = true
+      queueMicrotask(() => {
+        if (!isActive) {
+          return
+        }
+
+        setVehicleId('')
+        setRequestedPartName('')
+        setQuantity('1')
+        setDetails('')
+        setError(null)
+        setVehicleComboSearch('')
+        setDebouncedVehicleSearch('')
+        setSelectedVehicleSnapshot(null)
+      })
+
+      return () => {
+        isActive = false
+      }
     }
   }, [open])
 
@@ -129,7 +152,7 @@ export function PartRequestFormDialog({
 
     const found = vehicles.find((v) => v.vehicleId === id)
     if (found) {
-      setSelectedVehicleSnapshot(found)
+      queueMicrotask(() => setSelectedVehicleSnapshot(found))
     }
   }, [vehicles, vehicleId])
 
@@ -168,6 +191,7 @@ export function PartRequestFormDialog({
         quantity: Number(quantity),
         details: details.trim() || undefined,
         partImage: partImage ?? undefined,
+        photo,
       })
       onOpenChange(false)
     } catch (submitError) {
@@ -262,6 +286,26 @@ export function PartRequestFormDialog({
                 className="mt-2 h-32 w-32 rounded-xl object-cover ring-1 ring-[var(--vs-border)]"
                 src={imagePreview}
               />
+            Part Image (Optional)
+            <input
+              accept="image/jpeg,image/png,image/webp"
+              className="form-input mt-1"
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null
+                setPhoto(file)
+                if (previewUrl) URL.revokeObjectURL(previewUrl)
+                setPreviewUrl(file ? URL.createObjectURL(file) : null)
+              }}
+              type="file"
+            />
+            {previewUrl && (
+              <div className="mt-2 rounded-lg overflow-hidden border border-[var(--vs-border)] bg-[var(--vs-bg)] flex items-center justify-center" style={{ maxHeight: 140 }}>
+                <img
+                  alt="Part preview"
+                  className="max-h-36 max-w-full object-contain"
+                  src={previewUrl}
+                />
+              </div>
             )}
           </label>
 

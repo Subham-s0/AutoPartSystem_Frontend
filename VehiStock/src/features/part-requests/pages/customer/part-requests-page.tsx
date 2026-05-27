@@ -426,6 +426,22 @@ export function PartRequestsPage() {
                   </div>
                 </div>
               ) : null}
+
+              {detailRequest.photoUrl ? (
+                <div className="min-w-0 rounded-lg border border-[var(--vs-border)] bg-[var(--vs-bg)] p-3 md:col-span-2">
+                  <div className="text-[11px] font-bold uppercase text-[var(--vs-muted)]">Part Image</div>
+                  <div className="mt-2 flex">
+                    <a href={getVehicleImageSrc(detailRequest.photoUrl)} target="_blank" rel="noreferrer">
+                      <img
+                        alt="Requested part"
+                        className="max-h-48 rounded-lg object-contain border border-[var(--vs-border)] bg-[var(--vs-bg)]"
+                        onError={handleVehicleImageError}
+                        src={getVehicleImageSrc(detailRequest.photoUrl)}
+                      />
+                    </a>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
           <DialogFooter>

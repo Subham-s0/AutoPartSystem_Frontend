@@ -79,8 +79,10 @@ export function ServiceHistoryDetailPage() {
 
   React.useEffect(() => {
     if (!isValidId) {
-      setError('Service record id is invalid.')
-      setIsLoading(false)
+      queueMicrotask(() => {
+        setError('Service record id is invalid.')
+        setIsLoading(false)
+      })
       return
     }
 

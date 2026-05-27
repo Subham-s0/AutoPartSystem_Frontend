@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { DollarSign, Package, TrendingUp, Calendar as CalendarIcon, Loader2, Download, FileText, Plus, PieChart as PieChartIcon } from 'lucide-react'
+import { DollarSign, Package, TrendingUp, Calendar as CalendarIcon, Loader2, Download, FileText, Plus, PieChart as PieChartIcon, Wrench } from 'lucide-react'
 import { getDailyReport, getMonthlyReport, getYearlyReport, type FinancialReport } from '../../api/reports-api'
 import { formatCurrency } from '@/utils/format'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
@@ -12,6 +12,10 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+
+function formatChartCurrency(value: unknown) {
+  return typeof value === 'number' ? formatCurrency(value) : formatCurrency(Number(value) || 0)
+}
 
 export function ReportsPage() {
   const navigate = useNavigate()
@@ -24,7 +28,9 @@ export function ReportsPage() {
   const breakdownPageSize = 5
 
   useEffect(() => {
-    setBreakdownPage(1)
+    queueMicrotask(() => {
+      setBreakdownPage(1)
+    })
   }, [reportData])
 
   // Filters
@@ -33,7 +39,7 @@ export function ReportsPage() {
   const [monthlyYear, setMonthlyYear] = useState(() => new Date().getFullYear().toString())
   const [yearlyYear, setYearlyYear] = useState(() => new Date().getFullYear().toString())
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     setLoading(true)
     try {
       let data
@@ -51,17 +57,19 @@ export function ReportsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeTab, dailyDate, monthlyMonth, monthlyYear, yearlyYear])
 
   useEffect(() => {
-    fetchReport()
-  }, [activeTab, dailyDate, monthlyMonth, monthlyYear, yearlyYear])
+    queueMicrotask(() => {
+      void fetchReport()
+    })
+  }, [fetchReport])
 
   const handleExportCSV = () => {
     if (!reportData || !reportData.breakdown) return
-    const headers = ['Date/Label', 'Revenue', 'Cost', 'Profit']
+    const headers = ['Date/Label', 'Parts Sales', 'Services Revenue', 'Combined Revenue', 'Cost', 'Profit']
     const rows = reportData.breakdown.map(row => 
-      [row.label, row.revenue, row.cost, row.profit].join(',')
+      [row.label, row.salesRevenue, row.serviceRevenue, row.revenue, row.cost, row.profit].join(',')
     )
     const csvContent = [headers.join(','), ...rows].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv' })
@@ -135,16 +143,22 @@ export function ReportsPage() {
     doc.setDrawColor(16, 185, 129) // emerald-500
     doc.roundedRect(14, 70, pageWidth - 28, 40, 2, 2, 'S')
 
-    doc.text(`Total Revenue:`, 20, 80)
-    doc.text(formatCurrency(reportData.totalSalesRevenue), 80, 80)
+    doc.text(`Parts Sales:`, 20, 80)
+    doc.text(formatCurrency(reportData.totalSalesRevenue), 65, 80)
 
-    doc.text(`Total Cost:`, 20, 90)
-    doc.text(formatCurrency(reportData.totalPurchaseCost), 80, 90)
+    doc.text(`Services Revenue:`, 20, 90)
+    doc.text(formatCurrency(reportData.totalServiceRevenue), 65, 90)
+
+    doc.text(`Combined Revenue:`, 115, 80)
+    doc.text(formatCurrency(reportData.totalCombinedRevenue), 160, 80)
+
+    doc.text(`Total Cost:`, 115, 90)
+    doc.text(formatCurrency(reportData.totalPurchaseCost), 160, 90)
 
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(4, 120, 87) // emerald-700
     doc.text(`Net Profit:`, 20, 102)
-    doc.text(formatCurrency(reportData.totalProfit), 80, 102)
+    doc.text(formatCurrency(reportData.totalProfit), 65, 102)
     doc.setFont('helvetica', 'normal')
     
     // 3. Details Table
@@ -156,6 +170,8 @@ export function ReportsPage() {
       
       const tableData = reportData.breakdown.map(row => [
         row.label,
+        formatCurrency(row.salesRevenue),
+        formatCurrency(row.serviceRevenue),
         formatCurrency(row.revenue),
         formatCurrency(row.cost),
         formatCurrency(row.profit)
@@ -163,7 +179,7 @@ export function ReportsPage() {
       
       autoTable(doc, {
         startY: 130,
-        head: [['Period/Label', 'Revenue', 'Cost', 'Profit']],
+        head: [['Period/Label', 'Parts Sales', 'Services', 'Combined', 'Cost', 'Profit']],
         body: tableData,
         theme: 'grid',
         headStyles: { 
@@ -186,7 +202,7 @@ export function ReportsPage() {
     }
 
     // 4. Footer
-    const pageCount = (doc as any).internal.getNumberOfPages()
+    const pageCount = doc.getNumberOfPages()
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i)
       doc.setFontSize(8)
@@ -218,10 +234,11 @@ export function ReportsPage() {
     : 1
 
   const pieData = reportData ? [
-    { name: 'Revenue', value: reportData.totalSalesRevenue },
+    { name: 'Parts Sales', value: reportData.totalSalesRevenue },
+    { name: 'Services', value: reportData.totalServiceRevenue },
     { name: 'Cost', value: reportData.totalPurchaseCost }
   ] : []
-  const PIE_COLORS = ['#10b981', '#f59e0b']
+  const PIE_COLORS = ['#10b981', '#3b82f6', '#f59e0b']
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -299,19 +316,51 @@ export function ReportsPage() {
         </div>
 
         {reportData && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             <Card 
               className="border-emerald-100 shadow-sm bg-gradient-to-br from-white to-emerald-50/30 cursor-pointer hover:shadow-md hover:border-emerald-300 transition-all active:scale-[0.98]"
               onClick={() => navigate('/admin')}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-emerald-800">Total Sales Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium text-emerald-800">Parts Sales Revenue</CardTitle>
                 <DollarSign className="h-4 w-4 text-emerald-600" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-emerald-950">{formatCurrency(reportData.totalSalesRevenue)}</div>
                 <p className="text-xs text-emerald-600/80 mt-1">
-                  Gross revenue from parts and services
+                  Revenue from direct part sales
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="border-emerald-100 shadow-sm bg-gradient-to-br from-white to-emerald-50/30 cursor-pointer hover:shadow-md hover:border-emerald-300 transition-all active:scale-[0.98]"
+              onClick={() => navigate('/admin/service-records')}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-emerald-800">Services Revenue</CardTitle>
+                <Wrench className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-emerald-950">{formatCurrency(reportData.totalServiceRevenue)}</div>
+                <p className="text-xs text-emerald-600/80 mt-1">
+                  Revenue from vehicle services
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="border-emerald-100 shadow-sm bg-gradient-to-br from-white to-emerald-50/30 cursor-pointer hover:shadow-md hover:border-emerald-300 transition-all active:scale-[0.98]"
+              onClick={() => navigate('/admin')}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-emerald-800">Combined Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-emerald-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-emerald-950">{formatCurrency(reportData.totalCombinedRevenue)}</div>
+                <p className="text-xs text-emerald-600/80 mt-1">
+                  Gross revenue (Parts + Services)
                 </p>
               </CardContent>
             </Card>
@@ -344,7 +393,7 @@ export function ReportsPage() {
               <CardContent className="relative">
                 <div className="text-2xl font-bold text-emerald-600">{formatCurrency(reportData.totalProfit)}</div>
                 <p className="text-xs text-emerald-600/80 mt-1">
-                  Total Revenue - Purchase Cost
+                  Combined Revenue - Purchase Cost
                 </p>
               </CardContent>
             </Card>
@@ -378,7 +427,9 @@ export function ReportsPage() {
                   <thead className="text-xs text-emerald-800 uppercase bg-emerald-50/50 sticky top-0">
                     <tr>
                       <th className="px-4 py-3 font-semibold">Period</th>
-                      <th className="px-4 py-3 font-semibold text-right">Revenue</th>
+                      <th className="px-4 py-3 font-semibold text-right">Parts Sales</th>
+                      <th className="px-4 py-3 font-semibold text-right">Services</th>
+                      <th className="px-4 py-3 font-semibold text-right">Combined</th>
                       <th className="px-4 py-3 font-semibold text-right">Cost</th>
                       <th className="px-4 py-3 font-semibold text-right">Profit</th>
                     </tr>
@@ -387,9 +438,11 @@ export function ReportsPage() {
                     {paginatedBreakdown.map((row, i) => (
                       <tr key={i} className="border-b border-emerald-50 hover:bg-emerald-50/30 transition-colors">
                         <td className="px-4 py-3 font-medium text-emerald-950">{row.label}</td>
-                        <td className="px-4 py-3 text-right text-emerald-600">{formatCurrency(row.revenue)}</td>
+                        <td className="px-4 py-3 text-right text-emerald-600">{formatCurrency(row.salesRevenue)}</td>
+                        <td className="px-4 py-3 text-right text-blue-600">{formatCurrency(row.serviceRevenue)}</td>
+                        <td className="px-4 py-3 text-right text-emerald-700 font-semibold">{formatCurrency(row.revenue)}</td>
                         <td className="px-4 py-3 text-right text-amber-600">{formatCurrency(row.cost)}</td>
-                        <td className="px-4 py-3 text-right font-medium text-emerald-700">{formatCurrency(row.profit)}</td>
+                        <td className="px-4 py-3 text-right font-bold text-emerald-800">{formatCurrency(row.profit)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -453,9 +506,10 @@ export function ReportsPage() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0fdf4" />
                         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill: '#064e3b'}} />
                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#064e3b'}} tickFormatter={(val) => `NPR ${val/1000}k`} />
-                        <Tooltip cursor={{fill: '#f0fdf4'}} formatter={(value: number) => formatCurrency(value)} />
+                        <Tooltip cursor={{fill: '#f0fdf4'}} formatter={formatChartCurrency} />
                         <Legend />
-                        <Bar dataKey="revenue" name="Revenue" fill="#10b981" radius={[4, 4, 0, 0]} minPointSize={5} />
+                        <Bar dataKey="salesRevenue" name="Parts Sales" fill="#10b981" radius={[4, 4, 0, 0]} minPointSize={5} />
+                        <Bar dataKey="serviceRevenue" name="Services" fill="#3b82f6" radius={[4, 4, 0, 0]} minPointSize={5} />
                         <Bar dataKey="cost" name="Cost" fill="#f59e0b" radius={[4, 4, 0, 0]} minPointSize={5} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -478,11 +532,11 @@ export function ReportsPage() {
                             paddingAngle={5}
                             dataKey="value"
                           >
-                            {pieData.map((entry, index) => (
+                            {pieData.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                          <Tooltip formatter={formatChartCurrency} />
                           <Legend verticalAlign="bottom" height={36}/>
                         </PieChart>
                       </ResponsiveContainer>

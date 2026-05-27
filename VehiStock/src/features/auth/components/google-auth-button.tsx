@@ -21,6 +21,12 @@ declare global {
 }
 
 let googleScriptPromise: Promise<void> | null = null
+let latestOnCredential: ((idToken: string) => void | Promise<void>) | null = null
+let latestOnError: ((message: string) => void) | null = null
+let isGoogleInitialized = false
+let isGoogleInitialized = false
+let currentCredentialCallback: ((idToken: string) => void | Promise<void>) | null = null
+let currentErrorCallback: ((message: string) => void) | null = null
 
 let isGoogleAuthInitialized = false
 
@@ -76,6 +82,14 @@ export function GoogleAuthButton({
 }: GoogleAuthButtonProps) {
   const containerRef = React.useRef<HTMLDivElement | null>(null)
 
+  latestOnCredential = onCredential
+  latestOnError = onError
+
+  React.useEffect(() => {
+    currentCredentialCallback = onCredential
+    currentErrorCallback = onError ?? null
+  }, [onCredential, onError])
+
   React.useEffect(() => {
     if (!APP_CONFIG.googleClientId) {
       onError?.(
@@ -101,6 +115,7 @@ export function GoogleAuthButton({
         }
 
         if (!isGoogleAuthInitialized) {
+        if (!isGoogleInitialized) {
           window.google.accounts.id.initialize({
             client_id: APP_CONFIG.googleClientId,
             callback: ({ credential }) => {
@@ -113,6 +128,21 @@ export function GoogleAuthButton({
             },
           })
           isGoogleAuthInitialized = true
+                latestOnError?.('Google did not return an ID token.')
+                return
+              }
+
+              void latestOnCredential?.(credential)
+                currentErrorCallback?.('Google did not return an ID token.')
+                return
+              }
+
+              if (currentCredentialCallback) {
+                void currentCredentialCallback(credential)
+              }
+            },
+          })
+          isGoogleInitialized = true
         }
 
         window.google.accounts.id.renderButton(container, {

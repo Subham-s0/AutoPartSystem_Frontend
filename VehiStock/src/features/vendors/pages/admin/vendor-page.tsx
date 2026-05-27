@@ -77,6 +77,17 @@ export function VendorPage() {
     let mounted = true
     setLoading(true)
     setError(null)
+    const timeoutId = setTimeout(() => {
+      void fetchVendors(searchQuery, page)
+    }, 300)
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, page, fetchVendors])
+
+  React.useEffect(() => {
+    queueMicrotask(() => {
+      setPage(1)
+    })
+  }, [searchQuery])
 
     getAllVendors(searchText.trim() || undefined, pagination.page, pagination.pageSize)
       .then((res) => {

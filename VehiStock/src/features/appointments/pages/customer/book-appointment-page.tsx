@@ -196,7 +196,7 @@ export function BookAppointmentPage() {
 
     const found = vehicles.find((v) => v.vehicleId === id)
     if (found) {
-      setSelectedVehicleSnapshot(found)
+      queueMicrotask(() => setSelectedVehicleSnapshot(found))
     }
   }, [vehicles, vehicleId])
 
@@ -215,7 +215,7 @@ export function BookAppointmentPage() {
 
   React.useEffect(() => {
     if (isDialogOpen) {
-      setVehicleComboSearch('')
+      queueMicrotask(() => setVehicleComboSearch(''))
     }
   }, [isDialogOpen])
 
@@ -290,8 +290,8 @@ export function BookAppointmentPage() {
     )
 
     if (currentAppointment) {
-      setSelectedAppointment(currentAppointment)
       handledAppointmentLinkRef.current = linkedAppointmentIdParam
+      queueMicrotask(() => setSelectedAppointment(currentAppointment))
       return
     }
 

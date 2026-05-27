@@ -8,6 +8,7 @@ export interface ServiceRecordPartRequest {
 }
 
 export interface CreateServiceRecordInput {
+export interface CreateServiceRecordRequest {
   customerId: number
   vehicleId: number
   diagnosis: string
@@ -18,6 +19,11 @@ export interface CreateServiceRecordInput {
 }
 
 export interface UpdateServiceRecordInput {
+  status?: string
+  partsUsed: ServiceRecordPartRequest[]
+}
+
+export interface UpdateServiceRecordRequest {
   diagnosis: string
   workDone: string
   laborCharge: number
@@ -26,6 +32,11 @@ export interface UpdateServiceRecordInput {
 }
 
 export interface ServiceRecordPartResponse {
+  status?: string
+  partsUsed: ServiceRecordPartRequest[]
+}
+
+export interface ServiceRecordPart {
   serviceRecordPartId: number
   partId: number
   partName: string
@@ -36,6 +47,7 @@ export interface ServiceRecordPartResponse {
 }
 
 export interface ServiceRecordResponse {
+export interface ServiceRecord {
   serviceRecordId: number
   customerId: number
   customerName: string
@@ -44,6 +56,7 @@ export interface ServiceRecordResponse {
   staffMemberId: number
   staffName: string
   appointmentId: number | null
+  appointmentId?: number
   serviceDate: string
   status: string
   diagnosis: string
@@ -54,6 +67,9 @@ export interface ServiceRecordResponse {
   notes: string | null
   serviceInvoiceId: number | null
   partsUsed: ServiceRecordPartResponse[]
+  notes?: string
+  serviceInvoiceId?: number
+  partsUsed: ServiceRecordPart[]
 }
 
 export interface ServiceInvoiceResponse {
@@ -68,11 +84,22 @@ export interface ServiceInvoiceResponse {
   totalAmount: number
   amountPaid: number
   balanceDue: number
+  invoiceNo: string
+  customerId: number
+  customerName: string
+  vehicleId: number
+  vehicleNumber: string
+  serviceRecordId: number
+  invoiceDate: string
+  laborCharge: number
+  partsCharge: number
+  totalAmount: number
   paymentStatus: string
 }
 
 export function getServiceRecords() {
   return apiRequest<ServiceRecordResponse[]>(API_ROUTES.staff.serviceRecords)
+  return apiRequest<ServiceRecord[]>(API_ROUTES.staff.serviceRecords)
 }
 
 export function getServiceRecordLookups() {
@@ -81,6 +108,8 @@ export function getServiceRecordLookups() {
 
 export function createServiceRecord(input: CreateServiceRecordInput) {
   return apiRequest<ServiceRecordResponse>(API_ROUTES.staff.serviceRecords, {
+export function createServiceRecord(input: CreateServiceRecordRequest) {
+  return apiRequest<ServiceRecord>(API_ROUTES.staff.serviceRecords, {
     method: 'POST',
     body: input,
   })
@@ -88,6 +117,8 @@ export function createServiceRecord(input: CreateServiceRecordInput) {
 
 export function updateServiceRecord(id: number, input: UpdateServiceRecordInput) {
   return apiRequest<ServiceRecordResponse>(`${API_ROUTES.staff.serviceRecords}/${id}`, {
+export function updateServiceRecord(id: number, input: UpdateServiceRecordRequest) {
+  return apiRequest<ServiceRecord>(`${API_ROUTES.staff.serviceRecords}/${id}`, {
     method: 'PUT',
     body: input,
   })

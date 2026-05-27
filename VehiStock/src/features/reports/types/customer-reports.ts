@@ -28,3 +28,16 @@ export interface PendingCreditReportItem {
   amountPaid: number
   balanceDue: number
 }
+
+export interface CustomerReportSummary {
+  totalCustomersWithInvoices: number
+  totalInvoices: number
+  totalRevenue: number
+  totalOutstandingBalance: number
+  averageCustomerSpend: number
+}
+
+export interface CustomerReportFilters {
+  fromDate?: string
+  toDate?: string
+}

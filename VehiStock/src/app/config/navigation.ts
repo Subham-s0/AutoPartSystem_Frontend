@@ -4,6 +4,7 @@ import {
   Building2,
   CalendarDays,
   CarFront,
+  ClipboardList,
   CreditCard,
   FileText,
   History,
@@ -32,6 +33,7 @@ const adminNavigation: NavigationSection[] = [
       {
         label: 'Analytics',
         to: ROUTE_PATHS.admin.analytics,
+        to: '/admin/analytics',
         icon: BarChart3,
       },
       {
@@ -48,6 +50,16 @@ const adminNavigation: NavigationSection[] = [
         label: 'Vendors',
         to: ROUTE_PATHS.admin.vendors,
         icon: Building2,
+      },
+      {
+        label: 'Purchase Invoices',
+        to: '/admin/purchase-invoices',
+        icon: FileText,
+      },
+      {
+        label: 'Part Requests',
+        to: '/admin/part-requests',
+        icon: ShoppingCart,
       },
     ],
   },
@@ -108,6 +120,11 @@ const staffNavigation: NavigationSection[] = [
         icon: Users,
       },
       {
+        label: 'Service Records',
+        to: ROUTE_PATHS.staff.serviceRecords,
+        icon: ClipboardList,
+      },
+      {
         label: 'Sales Invoices',
         to: ROUTE_PATHS.staff.salesInvoices,
         icon: ShoppingCart,
@@ -116,6 +133,9 @@ const staffNavigation: NavigationSection[] = [
         label: 'Service Records',
         to: ROUTE_PATHS.staff.serviceRecords,
         icon: Wrench,
+        label: 'Part Requests',
+        to: '/staff/part-requests',
+        icon: ShoppingCart,
       },
       {
         label: 'Customer Reports',

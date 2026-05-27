@@ -3,12 +3,14 @@ import { API_ROUTES } from '@/constants/api-routes'
 
 export interface FinancialReport {
   totalSalesRevenue: number
+  totalServiceRevenue: number
+  totalCombinedRevenue: number
   totalPurchaseCost: number
   totalProfit: number
   totalItemsSold: number
   fromDate: string
   toDate: string
-  breakdown: { label: string; revenue: number; cost: number; profit: number }[]
+  breakdown: { label: string; salesRevenue: number; serviceRevenue: number; revenue: number; cost: number; profit: number }[]
 }
 
 export async function getDailyReport(date?: string) {

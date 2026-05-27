@@ -6,6 +6,11 @@ import path from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

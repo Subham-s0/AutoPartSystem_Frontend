@@ -42,6 +42,7 @@ async function restoreSession() {
     tokenManager.setSession(nextSession)
     return nextSession
   } catch (error) {
+    console.warn('Failed to restore session via refresh token:', error)
     clearAuthSession()
     return null
   }

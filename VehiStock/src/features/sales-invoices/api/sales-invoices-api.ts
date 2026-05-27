@@ -39,6 +39,10 @@ export function sendInvoiceEmail(invoiceId: number) {
   })
 }
 
+export function getSalesInvoiceById(invoiceId: number) {
+  return apiRequest<SalesInvoice>(API_ROUTES.staff.salesInvoiceDetail(invoiceId))
+}
+
 export interface PaginatedSalesInvoices {
   items: SalesInvoice[]
   pageNumber: number

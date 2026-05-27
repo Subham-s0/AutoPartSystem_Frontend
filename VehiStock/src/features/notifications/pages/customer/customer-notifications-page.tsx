@@ -130,7 +130,9 @@ export function CustomerNotificationsPage() {
   ])
 
   React.useEffect(() => {
-    void loadNotifications()
+    queueMicrotask(() => {
+      void loadNotifications()
+    })
   }, [loadNotifications])
 
   async function handleMarkAsRead(notificationId: number) {

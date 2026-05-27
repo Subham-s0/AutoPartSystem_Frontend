@@ -1,5 +1,14 @@
 import * as React from 'react'
-import { CalendarDays, CheckCircle2, AlertTriangle, Search, UserCheck, Wrench } from 'lucide-react'
+import {
+  CalendarDays,
+  CheckCircle2,
+  AlertTriangle,
+  Search,
+  UserCheck,
+  Wrench,
+  XCircle,
+} from 'lucide-react'
+import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -26,8 +35,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { PageSection } from '@/components/shared/page-section'
 import {
+  acceptStaffAppointment,
   getStaffAppointments,
   updateAppointmentStatus,
   assignStaffToAppointment,
@@ -45,7 +65,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from '@/components/ui/dialog'
 import { Loader2 } from 'lucide-react'
 
@@ -80,8 +99,8 @@ function CompleteServiceJobForm({
         notes: formData.notes
       })
       onSuccess()
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create service job')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create service job')
     } finally {
       setIsLoading(false)
     }
@@ -124,6 +143,10 @@ function CompleteServiceJobForm({
   )
 }
 
+function canAssignStaff(appointment: StaffAppointment) {
+  return appointment.status.toLowerCase() === 'confirmed'
+}
+
 export function AppointmentsPage() {
   const [appointments, setAppointments] = React.useState<StaffAppointment[]>([])
   const [staffList, setStaffList] = React.useState<StaffSummary[]>([])
@@ -138,6 +161,10 @@ export function AppointmentsPage() {
   const [searchText, setSearchText] = React.useState('')
   const [appliedSearch, setAppliedSearch] = React.useState('')
   const [completingAppointment, setCompletingAppointment] = React.useState<StaffAppointment | null>(null)
+  const [appointmentToCancel, setAppointmentToCancel] =
+    React.useState<StaffAppointment | null>(null)
+  const [isCancelling, setIsCancelling] = React.useState(false)
+  const [acceptingId, setAcceptingId] = React.useState<number | null>(null)
 
   const loadData = React.useCallback(async () => {
     try {
@@ -173,17 +200,44 @@ export function AppointmentsPage() {
     })
   }, [loadData])
 
-  const handleStatusChange = async (appointmentId: number, nextStatus: string) => {
+  const handleAccept = async (appointmentId: number) => {
     try {
       setError(null)
-      await updateAppointmentStatus(appointmentId, nextStatus)
+      setAcceptingId(appointmentId)
+      await acceptStaffAppointment(appointmentId)
+      toast.success('Appointment accepted and assigned to you.')
       void loadData()
     } catch (err) {
       setError(
         err instanceof ApiError || err instanceof Error
           ? err.message
-          : 'Failed to update appointment status.',
+          : 'Failed to accept appointment.',
       )
+    } finally {
+      setAcceptingId(null)
+    }
+  }
+
+  const handleCancelAppointment = async () => {
+    if (!appointmentToCancel) {
+      return
+    }
+
+    try {
+      setError(null)
+      setIsCancelling(true)
+      await updateAppointmentStatus(appointmentToCancel.appointmentId, 'Cancelled')
+      toast.success('Appointment cancelled successfully.')
+      setAppointmentToCancel(null)
+      void loadData()
+    } catch (err) {
+      setError(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : 'Failed to cancel appointment.',
+      )
+    } finally {
+      setIsCancelling(false)
     }
   }
 
@@ -383,29 +437,39 @@ export function AppointmentsPage() {
                         {/* Status */}
                         <TableCell>{getStatusBadge(a.status)}</TableCell>
                         
-                        {/* Assigned Staff Selector */}
+                        {/* Assigned Staff */}
                         <TableCell>
                           <div className="w-48">
-                            <Select
-                              value={a.assignedStaffId ? String(a.assignedStaffId) : 'unassigned'}
-                              onValueChange={(val) => {
-                                if (val !== 'unassigned') {
-                                  void handleAssignStaff(a.appointmentId, Number(val))
-                                }
-                              }}
-                            >
-                              <SelectTrigger className="h-8 text-xs rounded-lg border-gray-200">
-                                <SelectValue placeholder="Unassigned" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="unassigned" disabled className="text-xs text-muted-foreground">Unassigned</SelectItem>
-                                {staffList.map((s) => (
-                                  <SelectItem key={s.staffMemberId} value={String(s.staffMemberId)} className="text-xs">
-                                    {s.fullName} ({s.jobTitle})
+                            {canAssignStaff(a) ? (
+                              <Select
+                                value={a.assignedStaffId ? String(a.assignedStaffId) : 'unassigned'}
+                                onValueChange={(val) => {
+                                  if (val !== 'unassigned') {
+                                    void handleAssignStaff(a.appointmentId, Number(val))
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs rounded-lg border-gray-200">
+                                  <SelectValue placeholder="Unassigned" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="unassigned" disabled className="text-xs text-muted-foreground">
+                                    Unassigned
                                   </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                                  {staffList.map((s) => (
+                                    <SelectItem key={s.staffMemberId} value={String(s.staffMemberId)} className="text-xs">
+                                      {s.fullName} ({s.jobTitle})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                {a.status.toLowerCase() === 'pending'
+                                  ? 'Assigned on accept'
+                                  : a.assignedStaffName ?? '—'}
+                              </span>
+                            )}
                           </div>
                         </TableCell>
 
@@ -417,40 +481,32 @@ export function AppointmentsPage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
+                                  disabled={acceptingId === a.appointmentId}
                                   className="h-8 px-2.5 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50"
-                                  onClick={() => void handleStatusChange(a.appointmentId, 'Confirmed')}
+                                  onClick={() => void handleAccept(a.appointmentId)}
                                 >
-                                  Confirm
+                                  {acceptingId === a.appointmentId ? 'Accepting...' : 'Accept'}
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   className="h-8 px-2.5 rounded-lg border-red-200 text-red-700 hover:bg-red-50"
-                                  onClick={() => void handleStatusChange(a.appointmentId, 'Cancelled')}
+                                  onClick={() => setAppointmentToCancel(a)}
                                 >
+                                  <XCircle className="mr-1 size-3.5" />
                                   Cancel
                                 </Button>
                               </>
                             )}
                             {a.status.toLowerCase() === 'confirmed' && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 px-2.5 rounded-lg border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                                  onClick={() => setCompletingAppointment(a)}
-                                >
-                                  Complete Service Job
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 px-2.5 rounded-lg border-red-200 text-red-700 hover:bg-red-50"
-                                  onClick={() => void handleStatusChange(a.appointmentId, 'Cancelled')}
-                                >
-                                  Cancel
-                                </Button>
-                              </>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 px-2.5 rounded-lg border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                onClick={() => setCompletingAppointment(a)}
+                              >
+                                Complete Service Job
+                              </Button>
                             )}
                             {(a.status.toLowerCase() === 'completed' || a.status.toLowerCase() === 'cancelled') && (
                               <span className="text-xs text-muted-foreground italic px-2">Archived</span>
@@ -505,6 +561,38 @@ export function AppointmentsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!open && !isCancelling) {
+            setAppointmentToCancel(null)
+          }
+        }}
+        open={Boolean(appointmentToCancel)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel appointment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will cancel the pending appointment for {appointmentToCancel?.vehicleNumber}. Confirmed
+              appointments cannot be cancelled.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>Keep appointment</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isCancelling}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleCancelAppointment()
+              }}
+              variant="destructive"
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel appointment'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={!!completingAppointment} onOpenChange={(open) => !open && setCompletingAppointment(null)}>
         <DialogContent className="max-w-md">
